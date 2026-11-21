@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI-таргетолог</title>
+<meta name="description" content="AI-агент, который ведёт рекламу в Meta, сверяет каждую заявку с CRM и считает результат до оплаты. Управление из Telegram.">
+<meta name="theme-color" content="#09090B">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: вертикальная презентация-скролл. Одна красная линия-«пульс» ведёт через все секции; интерактивные макеты — в телефонах. */
+:root{
+  --bg:#09090B; --bg2:#0E0E12; --card:#141418; --card2:#1A1A20; --line:#25252D; --line2:#34343F;
+  --t1:#F5F2F0; --t2:#ABA7AA; --t3:#6F6B72;
+  --red:#FF2E3F; --red2:#FF6B4A; --red-deep:#7A0D19; --red-soft:rgba(255,46,63,.12);
+  --ok:#3DDC84; --warn:#FFB020; --info:#6AB3F3;
+  --f-d:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-b:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-m:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:22px; --r-s:14px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--t1);font:400 17px/1.55 var(--f-b);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{font-family:var(--f-d);margin:0;text-wrap:balance;letter-spacing:-.02em}
+h1{font-size:clamp(34px,6.2vw,76px);line-height:1.02;font-weight:800}
+h2{font-size:clamp(26px,3.9vw,46px);line-height:1.08;font-weight:700}
+h3{font-size:17px;line-height:1.25;font-weight:700;letter-spacing:-.01em}
+p{margin:0}
+em{font-style:normal;color:var(--red)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+section{padding-block:clamp(72px,10vw,130px);position:relative}
+.eyebrow{font:600 12px/1 var(--f-m);letter-spacing:.14em;text-transform:uppercase;color:var(--red);display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.eyebrow::before{content:"";width:28px;height:2px;background:var(--red)}
+.lead{color:var(--t2);font-size:clamp(17px,1.6vw,20px);max-width:62ch;margin-top:18px}
+.mono{font-family:var(--f-m);font-variant-numeric:tabular-nums}
+.note{color:var(--t3);font-size:13px;line-height:1.5}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}*{animation-duration:.01s!important;scroll-behavior:auto!important}}
+
+/* top bar */
+.bar{position:fixed;inset:0 0 auto;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px max(20px,env(safe-area-inset-right,0px)) 14px max(20px,env(safe-area-inset-left,0px));background:rgba(9,9,11,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.05)}
+.bar>*{pointer-events:auto}
+.logo{font:800 14px/1 var(--f-d);display:flex;align-items:center;gap:10px;color:var(--t1);text-decoration:none}
+.logo i{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 var(--red);animation:ping 2s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,46,63,.7)}100%{box-shadow:0 0 0 14px rgba(255,46,63,0)}}
+.bar a.cta{font:600 13px/1 var(--f-b);color:var(--t1);text-decoration:none;padding:10px 16px;border:1px solid var(--line2);border-radius:999px;background:#0e0e12cc;backdrop-filter:blur(8px);transition:.2s}
+.bar a.cta:hover{border-color:var(--red);color:var(--red)}
+#prog{position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,var(--red),var(--red2));z-index:60;width:0}
+.dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:40;display:flex;flex-direction:column;gap:10px}
+.dots a{width:8px;height:8px;border-radius:50%;background:var(--line2);transition:.25s;position:relative}
+.dots a.on{background:var(--red);transform:scale(1.5)}
+.dots a span{position:absolute;right:18px;top:50%;transform:translateY(-50%);white-space:nowrap;font:600 11px/1 var(--f-m);color:var(--t2);background:var(--card);border:1px solid var(--line);padding:6px 9px;border-radius:8px;opacity:0;pointer-events:none;transition:.2s}
+.dots a:hover span{opacity:1}
+@media (max-width:900px){.dots{display:none}}
+
+/* hero */
+#hero{padding-top:clamp(110px,14vw,170px);padding-bottom:60px;overflow:hidden}
+#net{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero::after{content:"";position:absolute;inset:auto 0 0;height:180px;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+.hero-g{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;position:relative;z-index:2}
+.hero-g>*{min-width:0}
+.pill{display:inline-flex;align-items:center;gap:9px;font:600 12px/1 var(--f-m);letter-spacing:.06em;color:var(--t2);border:1px solid var(--line2);border-radius:999px;padding:9px 14px;margin-bottom:26px;background:#0e0e1299}
+.pill b{color:var(--ok);font-weight:600}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
+.btn{display:inline-flex;align-items:center;gap:10px;font:700 15px/1 var(--f-b);padding:17px 24px;border-radius:14px;text-decoration:none;transition:transform .2s,box-shadow .2s,background .2s}
+.btn.p{background:var(--red);color:#fff;box-shadow:0 10px 40px -10px rgba(255,46,63,.7)}
+.btn.p:hover{transform:translateY(-2px);box-shadow:0 16px 50px -10px rgba(255,46,63,.9)}
+.btn.s{border:1px solid var(--line2);color:var(--t1)}
+.btn.s:hover{border-color:var(--t2)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:clamp(48px,7vw,84px);position:relative;z-index:2}
+.stats>div{background:var(--bg2);padding:26px 22px}
+.stats b{display:block;font:800 clamp(24px,3.2vw,40px)/1 var(--f-d);letter-spacing:-.03em}
+.stats span{display:block;color:var(--t2);font-size:14px;margin-top:10px;line-height:1.4}
+@media (max-width:900px){.hero-g{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+
+/* phone */
+.phone{width:min(330px,100%);aspect-ratio:330/672;margin-inline:auto;border-radius:44px;padding:10px;background:linear-gradient(145deg,#2c2c35,#111116);box-shadow:0 0 0 1px #3a3a45,0 40px 90px -30px rgba(255,46,63,.35),0 30px 60px -20px #000;position:relative}
+.phone::before{content:"";position:absolute;top:18px;left:50%;transform:translateX(-50%);width:84px;height:22px;border-radius:14px;background:#000;z-index:5}
+.scr{width:100%;height:100%;border-radius:35px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.float{animation:float 7s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-10px)}}
+
+/* telegram */
+.tg{background:#0E1621;font:400 13.5px/1.42 var(--f-b);color:#fff}
+.tg-h{padding:46px 14px 10px;background:#17212B;display:flex;align-items:center;gap:10px;border-bottom:1px solid #0b121b;flex:none}
+.tg-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red-deep));display:grid;place-items:center;font:800 12px/1 var(--f-d);flex:none}
+.tg-h b{display:block;font-size:14.5px;font-weight:600}
+.tg-h small{color:#6AB3F3;font-size:12px}
+.tg-b{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:7px;scrollbar-width:none;background:radial-gradient(circle at 20% 10%,#14202e,#0E1621 60%)}
+.tg-b::-webkit-scrollbar{display:none}
+.msg{max-width:90%;padding:8px 11px 9px;border-radius:14px;white-space:pre-wrap;word-break:break-word;animation:pop .35s cubic-bezier(.2,.9,.3,1.2) both;transform-origin:left bottom}
+@keyframes pop{from{opacity:0;transform:scale(.9) translateY(8px)}}
+.msg.bot{background:#182533;align-self:flex-start;border-bottom-left-radius:5px}
+.msg.me{background:#2B5278;align-self:flex-end;border-bottom-right-radius:5px;transform-origin:right bottom}
+.msg i{font-style:italic;color:#c9d6e2}
+.msg code{font:400 12.5px var(--f-m);color:#8fd0ff}
+.msg .done{display:block;margin-top:6px;color:#8fe3b0;font-style:italic}
+.day{align-self:center;font-size:11.5px;color:#9db0c2;background:#1e2c3a;padding:3px 10px;border-radius:99px}
+.kb{align-self:flex-start;width:90%;display:flex;flex-direction:column;gap:4px;margin-top:-3px;animation:pop .35s both}
+.kb div{display:flex;gap:4px}
+.kb button{flex:1;background:#243447;border-radius:8px;padding:9px 6px;font-size:12.5px;color:#fff;transition:.15s}
+.kb button:hover{background:#2f455e}
+.kb button.hot{box-shadow:0 0 0 2px var(--red);animation:hot 1.4s infinite}
+@keyframes hot{50%{box-shadow:0 0 0 2px rgba(255,46,63,.25)}}
+.typing{align-self:flex-start;background:#182533;border-radius:14px;padding:11px 14px;display:flex;gap:4px}
+.typing i{width:6px;height:6px;border-radius:50%;background:#6f8499;animation:ty 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes ty{30%{transform:translateY(-4px);background:#fff}}
+.tg-f{flex:none;background:#17212B;padding:9px 10px 14px;display:flex;align-items:center;gap:8px}
+.tg-f span{background:#2B5278;border-radius:99px;padding:7px 11px;font-size:12px;font-weight:600;white-space:nowrap}
+.tg-f em{flex:1;background:#0E1621;border-radius:99px;padding:8px 12px;color:#6f8499;font-size:13px}
+
+/* problem */
+.leaks{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:48px}
+.leak{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:26px 22px;display:flex;flex-direction:column;gap:14px;min-width:0;transition:border-color .3s,transform .3s}
+.leak:hover{border-color:var(--red);transform:translateY(-4px)}
+.leak b{font:800 clamp(34px,4vw,52px)/1 var(--f-d);color:var(--red);letter-spacing:-.04em}
+.leak p{color:var(--t2);font-size:15px}
+.leak small{margin-top:auto;font:400 11px/1.4 var(--f-m);color:var(--t3)}
+@media (max-width:980px){.leaks{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.leaks{grid-template-columns:1fr}}
+
+/* what */
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:48px}
+.three>div{background:var(--bg2);padding:32px 28px;min-width:0}
+.three .k{font:600 12px/1 var(--f-m);color:var(--red);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+.three h3{font-size:21px;margin-bottom:12px}
+.three p{color:var(--t2);font-size:15.5px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px}
+.chips span{font:400 12px/1 var(--f-m);padding:7px 10px;border:1px solid var(--line2);border-radius:99px;color:var(--t2)}
+@media (max-width:860px){.three{grid-template-columns:1fr}}
+
+/* brain */
+#brain{background:linear-gradient(var(--bg),var(--bg2) 30%,var(--bg))}
+.pipe{margin-top:54px;display:grid;grid-template-columns:repeat(6,1fr);gap:10px;position:relative}
+.pipe::before{content:"";position:absolute;left:4%;right:4%;top:33px;height:2px;background:repeating-linear-gradient(90deg,var(--red) 0 10px,transparent 10px 20px);background-size:20px 2px;animation:flow 1s linear infinite;opacity:.6}
+@keyframes flow{to{background-position:20px 0}}
+.node{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:0 4px;min-width:0}
+.node u{width:66px;height:66px;border-radius:20px;background:var(--card);border:1px solid var(--line2);display:grid;place-items:center;font:800 18px/1 var(--f-d);text-decoration:none;color:var(--t2);transition:.3s;position:relative;z-index:1}
+.node b{font:600 13px/1.25 var(--f-b);color:var(--t2);transition:.3s}
+.node.on u{background:var(--red);border-color:var(--red);color:#fff;transform:scale(1.1);box-shadow:0 0 50px -4px rgba(255,46,63,.8)}
+.node.on b{color:var(--t1)}
+.pipe-d{margin-top:34px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:30px;display:grid;grid-template-columns:1fr 1fr;gap:30px;min-height:230px}
+.pipe-d>*{min-width:0}
+.pipe-d h3{font-size:22px;margin-bottom:12px}
+.pipe-d p{color:var(--t2)}
+.pipe-d ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;font-size:14.5px}
+.pipe-d li{display:flex;gap:10px;color:var(--t2);animation:pop .4s both}
+.pipe-d li::before{content:"→";color:var(--red);font-family:var(--f-m);flex:none}
+@media (max-width:860px){.pipe{grid-template-columns:repeat(3,1fr);row-gap:24px}.pipe::before{display:none}.pipe-d{grid-template-columns:1fr}}
+
+/* playground */
+.play{margin-top:26px;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.play>div{background:var(--bg2);padding:30px;min-width:0}
+.sl{display:grid;gap:22px}
+.sl label{display:flex;justify-content:space-between;align-items:baseline;font-size:14.5px;color:var(--t2);margin-bottom:10px}
+.sl output{font:600 17px/1 var(--f-m);color:var(--t1)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:9px;background:linear-gradient(90deg,var(--red) var(--p,50%),var(--line2) var(--p,50%));cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:5px solid var(--red);box-shadow:0 4px 14px rgba(255,46,63,.5)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:5px solid var(--red)}
+.verdict{display:flex;flex-direction:column;gap:14px;justify-content:center;transition:background .4s}
+.verdict .tag{align-self:flex-start;font:600 12px/1 var(--f-m);letter-spacing:.1em;padding:8px 12px;border-radius:8px;background:var(--c);color:#09090B}
+.verdict h3{font-size:clamp(20px,2.4vw,28px)}
+.verdict p{color:var(--t2);font-size:15.5px}
+.verdict .rule{font:400 12.5px/1.5 var(--f-m);color:var(--t3);border-top:1px dashed var(--line2);padding-top:14px}
+@media (max-width:860px){.play{grid-template-columns:1fr}}
+
+/* demo layout */
+.demo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,330px);gap:clamp(28px,5vw,70px);align-items:center;margin-top:50px}
+.demo>*{min-width:0}
+.demo.flip{grid-template-columns:minmax(0,330px) minmax(0,1fr)}
+.list{display:flex;flex-direction:column;gap:8px}
+.list button{text-align:left;padding:18px 20px;border-radius:var(--r-s);border:1px solid var(--line);background:var(--card);display:grid;grid-template-columns:auto 1fr;gap:4px 14px;transition:.25s}
+.list button:hover{border-color:var(--line2)}
+.list button span{grid-row:span 2;font:600 12px/1 var(--f-m);color:var(--t3);padding-top:4px;transition:.25s}
+.list button b{font-weight:600;font-size:16px}
+.list button small{color:var(--t3);font-size:13.5px;line-height:1.4;max-height:0;overflow:hidden;transition:max-height .4s,margin .4s}
+.list button.on{border-color:var(--red);background:linear-gradient(90deg,var(--red-soft),var(--card) 70%)}
+.list button.on span{color:var(--red)}
+.list button.on small{max-height:90px;color:var(--t2);margin-top:4px}
+.hint{display:flex;align-items:center;gap:8px;font:400 12px/1.4 var(--f-m);color:var(--t3);margin-top:16px}
+.hint i{width:14px;height:14px;border-radius:4px;box-shadow:0 0 0 2px var(--red);flex:none}
+@media (max-width:860px){.demo,.demo.flip{grid-template-columns:1fr}.demo.flip .phone{order:2}}
+
+/* mini app (реальные токены тёмной темы приложения) */
+.ma{--mb:#13121C;--ms:#1D1C29;--ms2:#252435;--mbd:#2C2B3D;--m1:#F3F2FA;--m2:#ABABC2;--m3:#74748C;--ma:#FF7A2E;background:linear-gradient(135deg,#1D1934,#151D33 42%,#181728 70%,#2A1926);color:var(--m1);font:500 13px/1.4 "Golos Text",sans-serif}
+.ma-top{flex:none;padding:46px 14px 8px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--m2)}
+.ma-top b{font:800 14px/1 var(--f-d);color:var(--m1)}
+.ma-top span{border:1px solid var(--mbd);border-radius:99px;padding:4px 9px;font-size:11px}
+.ma-b{flex:1;overflow-y:auto;padding:6px 12px 14px;scrollbar-width:none;display:none;flex-direction:column;gap:10px}
+.ma-b::-webkit-scrollbar{display:none}
+.ma-b.on{display:flex;animation:fade .35s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+.tile{background:var(--ms);border:1px solid var(--mbd);border-radius:18px;padding:14px}
+.tile h4{margin:0 0 3px;font:700 13.5px/1.2 "Golos Text",sans-serif}
+.tile small{color:var(--m3);font-size:11.5px}
+.st{display:flex;align-items:center;gap:7px;color:var(--m2);font-size:12px}
+.st i{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+.hello{font:700 21px/1.15 "Golos Text",sans-serif;margin:6px 0 2px}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.kpi div{background:var(--ms);border:1px solid var(--mbd);border-radius:14px;padding:10px}
+.kpi b{display:block;font:700 19px/1 var(--f-m)}
+.kpi small{color:var(--m3);font-size:10.5px}
+.kpi em{font:600 10.5px var(--f-m);color:#22C55E}
+.ember{background:linear-gradient(135deg,#FF8A3D,#F26B1D 55%,#E2550B);border:0;color:#fff}
+.ember small{color:#ffe1cf}
+.ember .big{font:700 34px/1 var(--f-m);margin:8px 0 4px}
+.ember button{margin-top:10px;background:rgba(255,255,255,.2);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:600;color:#fff}
+.sim output{font:700 15px var(--f-m);color:var(--ma)}
+.sim input{--red:#FF7A2E;margin:12px 0 4px;background:linear-gradient(90deg,#FF7A2E var(--p,50%),var(--mbd) var(--p,50%))}
+.sim input::-webkit-slider-thumb{border-color:#FF7A2E;box-shadow:none;width:20px;height:20px}
+.sim .o{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.sim .o div{background:var(--ms2);border-radius:11px;padding:8px 10px}
+.sim .o b{display:block;font:700 16px var(--f-m)}
+.fn{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.fn div{display:grid;grid-template-columns:62px 1fr 34px;gap:8px;align-items:center;font-size:11.5px;color:var(--m2)}
+.fn i{height:8px;border-radius:9px;background:var(--ma);width:var(--w);transition:width 1s}
+.fn .bad i{background:#EF4444}
+.leakbox{margin-top:10px;background:#3D2819;border-radius:11px;padding:9px 11px;font-size:11.5px;color:#FFB48A}
+.notes{display:flex;flex-direction:column;gap:7px;margin-top:9px}
+.notes div{font-size:12px;color:var(--m2)}
+.notes b{font:600 10px/1 var(--f-m);padding:3px 6px;border-radius:5px;margin-right:6px;background:#2C2650;color:#B7A8FF}
+.notes b.s{background:#3B1F2D;color:#FF8FB1}.notes b.n{background:#1B3A2E;color:#6EE7A8}
+.crs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cr{background:var(--ms);border:1px solid var(--mbd);border-radius:16px;overflow:hidden}
+.cr .th{aspect-ratio:4/5;position:relative;display:grid;place-items:center;background:var(--g)}
+.cr .th::after{content:"▶";width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center;font-size:11px;padding-left:2px}
+.cr .th span{position:absolute;left:6px;top:6px;font-size:10px;background:rgba(0,0,0,.55);padding:3px 7px;border-radius:99px}
+.cr .th em{position:absolute;left:6px;bottom:6px;font-size:10px;background:#fff;color:#111;padding:3px 7px;border-radius:99px;font-weight:700}
+.cr .in{padding:8px 9px;font-size:11px;color:var(--m2)}
+.cr .in b{display:block;color:var(--m1);font-size:12px;margin-bottom:3px}
+.adv{display:grid;gap:7px}
+.adv div{border-radius:14px;padding:11px 12px;font-size:12px}
+.adv b{display:block;font-size:12.5px;margin-bottom:2px}
+.adv .a1{background:#1B3A2E;color:#9BE8BF}.adv .a2{background:#3B1F2D;color:#FFB0C6}.adv .a3{background:#1E2C4C;color:#A9C4FF}
+.orb{width:74px;height:74px;border-radius:50%;margin:10px auto 8px;background:conic-gradient(from 0deg,#FF7A2E,#FF2E3F,#7A2BFF,#FF7A2E);filter:blur(.3px);animation:spin 6s linear infinite;box-shadow:0 0 40px -6px #FF7A2E;position:relative;flex:none}
+.orb::after{content:"";position:absolute;inset:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3,transparent 55%),#1D1C29}
+@keyframes spin{to{transform:rotate(360deg)}}
+.c-intro{text-align:center;font-size:12.5px;color:var(--m2)}
+.c-intro b{display:block;color:var(--m1);font-size:14.5px;margin-bottom:5px}
+.c-chips{display:flex;flex-direction:column;gap:6px}
+.c-chips button{background:var(--ms);border:1px solid var(--mbd);border-radius:12px;padding:10px 12px;text-align:left;font-size:12.5px;color:var(--m1);transition:.2s}
+.c-chips button:hover{border-color:var(--ma)}
+.cm{max-width:92%;border-radius:18px;padding:9px 12px;font-size:12.5px;animation:pop .3s both;white-space:pre-wrap}
+.cm.u{align-self:flex-end;background:#35344a;border-bottom-right-radius:6px}
+.cm.a{align-self:flex-start;background:var(--ms);border:1px solid var(--mbd);border-bottom-left-radius:6px}
+.act{align-self:flex-start;background:linear-gradient(135deg,#FF8A3D,#E2550B);color:#fff;border-radius:12px;padding:10px 13px;font-size:12.5px;font-weight:700;animation:pop .3s both}
+.act.ok{background:#1B3A2E;color:#6EE7A8}
+.ma-tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:8px 10px 14px;background:#151420;border-top:1px solid var(--mbd)}
+.ma-tabs button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:14px;font:800 10.5px/1 "Golos Text",sans-serif;color:var(--m3);transition:.25s}
+.ma-tabs svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ma-tabs button.on{background:linear-gradient(135deg,#FF7A2E,#E2550B);color:#fff}
+.sheet{position:absolute;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:22px;z-index:9;animation:fade .2s}
+.sheet div{background:#252435;border-radius:16px;padding:18px;font-size:13px;text-align:center;color:var(--m1)}
+.sheet p{margin-bottom:14px}
+.sheet button{padding:9px 18px;border-radius:10px;font-weight:700;font-size:13px;background:#35344a;color:#fff;margin:0 3px}
+.sheet button.y{background:#FF7A2E}
+
+/* day */
+.dayb{margin-top:48px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:clamp(20px,3vw,34px)}
+.clock{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.clock b{font:800 clamp(44px,7vw,84px)/1 var(--f-d);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.clock span{color:var(--t2)}
+.hours{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin:22px 0 10px}
+.hours i{height:34px;border-radius:5px;background:var(--line);transition:.25s;cursor:pointer}
+.hours i.w{background:#3a2226}
+.hours i.e{background:var(--red-deep)}
+.hours i.on{background:var(--red);transform:scaleY(1.25);box-shadow:0 0 18px rgba(255,46,63,.7)}
+.ev{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:26px}
+.ev>*{min-width:0}
+.ev h3{font:600 12px/1 var(--f-m);letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:14px}
+.ev ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.ev li{display:flex;gap:12px;font-size:15px;color:var(--t2);align-items:baseline}
+.ev li b{font:600 12px/1 var(--f-m);color:var(--red);flex:none;min-width:74px}
+#evNow li{color:var(--t1);animation:pop .35s both}
+@media (max-width:760px){.ev{grid-template-columns:1fr}.hours i{height:26px}}
+
+/* results */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:40px}
+.tabs button{padding:11px 18px;border-radius:99px;border:1px solid var(--line2);font-weight:600;font-size:14.5px;color:var(--t2);transition:.2s}
+.tabs button.on{background:var(--t1);color:var(--bg);border-color:var(--t1)}
+.case{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:clamp(22px,3vw,38px)}
+.case-h{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-end;margin-bottom:26px}
+.case-h h3{font-size:clamp(20px,2.6vw,30px);max-width:22ch}
+.case-h p{color:var(--t3);font:400 13px/1.4 var(--f-m)}
+.seg{display:inline-flex;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:2px;flex-wrap:wrap}
+.seg button{padding:8px 13px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--t2)}
+.seg button.on{background:var(--red);color:#fff}
+.chart{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(6px,1.6vw,18px);height:290px;align-items:end;margin-top:26px;border-bottom:1px solid var(--line2);padding-bottom:0}
+.col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:8px;min-width:0}
+.col b{font:600 clamp(11px,1.3vw,15px)/1 var(--f-m);white-space:nowrap}
+.col i{width:100%;max-width:92px;border-radius:10px 10px 0 0;background:linear-gradient(var(--red),var(--red-deep));height:0;transition:height 1s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d)}
+.col.dim i{background:linear-gradient(#4a4a55,#2a2a32)}
+.xl{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(6px,1.6vw,18px);margin-top:10px;text-align:center;font-size:13px;color:var(--t2)}
+.xl small{display:block;font:400 11px var(--f-m);color:var(--t3);margin-top:3px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+.fact{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-s);padding:20px;min-width:0}
+.fact b{display:block;font:800 clamp(22px,2.6vw,32px)/1.05 var(--f-d);letter-spacing:-.03em;margin-bottom:10px}
+.fact b small{font:600 14px var(--f-m);color:var(--t3);letter-spacing:0}
+.fact p{color:var(--t2);font-size:14.5px}
+@media (max-width:760px){.facts{grid-template-columns:1fr}.chart{height:220px}}
+
+/* decisions */
+.dec{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:44px}
+.d{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px;display:flex;flex-direction:column;gap:12px;min-width:0;transition:.3s}
+.d:hover{border-color:var(--line2);transform:translateY(-3px)}
+.d .top{display:flex;justify-content:space-between;align-items:center;font:600 12px/1 var(--f-m);color:var(--t3)}
+.d .k{padding:6px 9px;border-radius:7px;background:var(--red-soft);color:var(--red)}
+.d .k.g{background:rgba(61,220,132,.12);color:var(--ok)}.d .k.y{background:rgba(255,176,32,.12);color:var(--warn)}
+.d p{color:var(--t2);font-size:14.5px}
+.d p b{color:var(--t1);font-weight:600}
+@media (max-width:980px){.dec{grid-template-columns:1fr 1fr}}
+@media (max-width:620px){.dec{grid-template-columns:1fr}}
+
+/* control */
+.ctl{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:48px}
+.ctl>div{background:var(--bg2);padding:32px;min-width:0}
+.ctl h3{font-size:20px;margin-bottom:18px;display:flex;align-items:center;gap:12px}
+.ctl h3 i{width:12px;height:12px;border-radius:50%;background:var(--c)}
+.ctl ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:13px}
+.ctl li{color:var(--t2);padding-left:22px;position:relative;font-size:15.5px}
+.ctl li::before{content:"";position:absolute;left:0;top:10px;width:9px;height:2px;background:var(--c)}
+.guard{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px}
+.guard div{border:1px solid var(--line);border-radius:var(--r-s);padding:20px;min-width:0}
+.guard b{display:block;font:800 24px/1 var(--f-d);color:var(--red);margin-bottom:10px}
+.guard span{color:var(--t2);font-size:14px;line-height:1.4;display:block}
+@media (max-width:860px){.ctl{grid-template-columns:1fr}.guard{grid-template-columns:1fr 1fr}}
+
+/* compare */
+.cmp{margin-top:44px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cmp>div{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:1px;background:var(--line)}
+.cmp>div>*{background:var(--bg2);padding:18px 22px;min-width:0;font-size:15px}
+.cmp>div>:first-child{color:var(--t2)}
+.cmp>div>:last-child{background:linear-gradient(90deg,rgba(255,46,63,.09),var(--bg2));color:var(--t1);font-weight:500}
+.cmp .hd>*{font:600 12px/1.3 var(--f-m);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.cmp .hd>:last-child{color:var(--red)}
+@media (max-width:720px){.cmp>div{grid-template-columns:1fr 1fr}.cmp>div>:first-child{grid-column:1/-1;padding-bottom:6px;font-weight:600;color:var(--t1)}.cmp .hd>:first-child{display:none}}
+
+/* price */
+.price{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;margin-top:48px}
+.price>*{min-width:0}
+.pc{border-radius:var(--r);padding:clamp(26px,3.4vw,44px);border:1px solid var(--line);background:var(--card)}
+.pc.main{background:radial-gradient(120% 90% at 0% 0%,rgba(255,46,63,.28),transparent 60%),var(--card);border-color:#5a1c24;position:relative;overflow:hidden}
+.pc .big{font:800 clamp(26px,3.6vw,42px)/1.08 var(--f-d);letter-spacing:-.03em;margin:14px 0 16px}
+.pc p{color:var(--t2)}
+.pc ul{margin:24px 0 0;padding:0;list-style:none;display:grid;gap:12px}
+.pc li{display:flex;gap:12px;font-size:15.5px}
+.pc li::before{content:"✓";color:var(--red);font-weight:700;flex:none}
+.steps{counter-reset:s;display:grid;gap:0;margin-top:20px}
+.steps div{counter-increment:s;display:grid;grid-template-columns:auto 1fr;gap:4px 16px;padding:18px 0;border-top:1px solid var(--line)}
+.steps div::before{content:counter(s,decimal-leading-zero);grid-row:span 2;font:600 13px/1.6 var(--f-m);color:var(--red)}
+.steps b{font-weight:600}
+.steps span{color:var(--t2);font-size:14.5px}
+@media (max-width:860px){.price{grid-template-columns:1fr}}
+
+#end{text-align:center;padding-bottom:90px}
+#end h2{font-size:clamp(30px,5.4vw,66px);font-weight:800;max-width:16ch;margin-inline:auto}
+#end .lead{margin-inline:auto}
+#end .btns{justify-content:center}
+footer{border-top:1px solid var(--line);padding:26px 0 calc(26px + env(safe-area-inset-bottom,0px));color:var(--t3);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<header class="bar">
+  <a class="logo" href="#hero"><i></i>AI-ТАРГЕТОЛОГ</a>
+  <a class="cta" href="#price">Подключить</a>
+</header>
+<nav class="dots" id="dots" aria-label="Разделы"></nav>
+
+<!-- 1 HERO -->
+<section id="hero" data-n="Начало">
+  <canvas id="net" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="hero-g">
+      <div>
+        <div class="pill rv"><i></i><b>в работе</b> · Meta Ads + CRM + Telegram</div>
+        <h1 class="rv" style="--d:.08s">Таргетолог, который <em>не спит</em> и считает до оплаты</h1>
+        <p class="lead rv" style="--d:.16s">AI-агент ведёт рекламу в Facebook и Instagram, сверяет каждую заявку с вашей CRM и каждое утро приносит план: что выключить, что масштабировать и где теряются деньги. Вы управляете им из Telegram.</p>
+        <div class="btns rv" style="--d:.24s">
+          <a class="btn p" href="#bot">Посмотреть в деле ↓</a>
+          <a class="btn s" href="#results">Результаты клиентов</a>
+        </div>
+      </div>
+      <div class="rv" style="--d:.3s">
+        <div class="phone float"><div class="scr tg">
+          <div class="tg-h"><div class="tg-av">AI</div><div><b>AI-таргетолог</b><br><small>бот</small></div></div>
+          <div class="tg-b" id="heroChat"></div>
+          <div class="tg-f"><span>📊 Dashboard</span><em>Сообщение</em></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="rv"><b class="cnt" data-to="2160">0</b><span>продаж за 6 месяцев в одном проекте — онлайн-школа, май–октябрь 2026</span></div>
+      <div class="rv" style="--d:.08s"><b><span class="cnt" data-to="7.9" data-dec="1">0</span>×</b><span>окупаемость рекламы за те же 6 месяцев: $56 тыс. расхода → ≈$443 тыс. выручки</span></div>
+      <div class="rv" style="--d:.16s"><b class="cnt" data-to="14941">0</b><span>заявок агент нашёл в Facebook и вернул в CRM — они не дошли бы до продаж</span></div>
+      <div class="rv" style="--d:.24s"><b>24/7</b><span>сверка новых заявок каждые 5 минут, биллинга — каждые 30</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 PROBLEM -->
+<section id="problem" data-n="Проблема">
+  <div class="wrap">
+    <div class="eyebrow rv">Где теряются деньги</div>
+    <h2 class="rv">Реклама отчитывается ценой лида. Бизнес живёт на оплатах. Между ними — <em>дыра</em></h2>
+    <p class="lead rv">Это цифры из аудитов реальных рекламных кабинетов, с которыми работает агент. До подключения этого не видел никто — ни таргетолог, ни отдел продаж.</p>
+    <div class="leaks">
+      <div class="leak rv"><b>7,7×</b><p>разница в цене оплаты между группами объявлений, у которых цена лида почти одинаковая: $39 против $301.</p><small>аудит 92 дней · 27 487 лидов</small></div>
+      <div class="leak rv" style="--d:.08s"><b>60%</b><p>лидов невозможно продать: неверные номера, не та аудитория, «не оставлял заявку». $15 500 за квартал.</p><small>тот же аудит</small></div>
+      <div class="leak rv" style="--d:.16s"><b>25–57%</b><p>заявок из лид-форм не доходили до CRM, пока интеграция «работала». Их оплатили, но никто не позвонил.</p><small>сверка FB ↔ CRM, май 2026</small></div>
+      <div class="leak rv" style="--d:.24s"><b>8×</b><p>чаще покупает клиент, до которого дозвонились за первые 5 минут. При этом 27% лидов — недозвон.</p><small>данные CRM, тот же проект</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 WHAT -->
+<section id="what" data-n="Что это">
+  <div class="wrap">
+    <div class="eyebrow rv">Что такое AI-таргетолог</div>
+    <h2 class="rv">Не чат-бот с советами. Сотрудник, подключённый к кабинету и CRM</h2>
+    <p class="lead rv">Агенту выдают доступ к рекламному кабинету Meta, вашей CRM и Telegram. Дальше он работает как Head of Paid: видит всю цепочку от показа до оплаты, сам следит за порядком и приходит к вам уже с решением.</p>
+    <div class="three">
+      <div class="rv"><div class="k">Видит</div><h3>Всю воронку, а не кабинет</h3><p>Каждое объявление связано с заявкой, сделкой и оплатой. Агент судит рекламу по цене оплаты и доле мусора, а не по цене лида.</p><div class="chips"><span>Meta Ads API</span><span>AmoCRM</span><span>Bitrix24</span><span>Conversions API</span></div></div>
+      <div class="rv" style="--d:.1s"><div class="k">Думает</div><h3>Математика + Claude</h3><p>Семь анализаторов считают цифры без AI. Затем модель Claude собирает из них план, опираясь на экономику вашего бизнеса и память о прошлых решениях.</p><div class="chips"><span>7 анализаторов</span><span>база знаний</span><span>память решений</span></div></div>
+      <div class="rv" style="--d:.2s"><div class="k">Действует</div><h3>Сам — рутину, с вами — деньги</h3><p>Заявки, сверки, алерты и отчёты идут автоматически. Паузы и бюджеты агент предлагает кнопкой — вы подтверждаете в один тап.</p><div class="chips"><span>Telegram-бот</span><span>Mini App</span><span>RU / UZ</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 BRAIN -->
+<section id="brain" data-n="Мозг">
+  <div class="wrap">
+    <div class="eyebrow rv">Как работает мозг</div>
+    <h2 class="rv">От сырых цифр до решения — <em>шесть шагов</em>, и каждый можно проверить</h2>
+    <p class="lead rv">Нажмите на шаг. Ни одна рекомендация не выдумывается: за каждой стоит цифра, которую видно на дашборде.</p>
+    <div class="pipe rv" id="pipe"></div>
+    <div class="pipe-d rv" id="pipeD"></div>
+
+    <h3 class="rv" style="margin-top:70px;font-size:clamp(20px,2.4vw,28px)">Проверьте логику сами</h3>
+    <p class="lead rv" style="margin-top:10px">Это настоящие пороги из правил агента. Подвигайте показатели объявления — и увидите, что он предложит.</p>
+    <div class="play rv">
+      <div class="sl">
+        <div><label for="pgGoal">Целевая цена лида <output id="oGoal"></output></label><input id="pgGoal" type="range" min="0.5" max="5" step="0.1" value="1"></div>
+        <div><label for="pgCpl">Фактическая цена лида <output id="oCpl"></output></label><input id="pgCpl" type="range" min="0.2" max="12" step="0.1" value="2.6"></div>
+        <div><label for="pgSpend">Потрачено на объявление <output id="oSpend"></output></label><input id="pgSpend" type="range" min="0" max="200" step="1" value="46"></div>
+        <div><label for="pgFreq">Частота показов <output id="oFreq"></output></label><input id="pgFreq" type="range" min="1" max="6" step="0.1" value="1.8"></div>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 BOT -->
+<section id="bot" data-n="Telegram-бот">
+  <div class="wrap">
+    <div class="eyebrow rv">Telegram-бот</div>
+    <h2 class="rv">Вся реклама — в одном чате. <em>Нажмите на кнопки</em>, они работают</h2>
+    <p class="lead rv">Так выглядят настоящие сообщения агента. Выберите сценарий слева и ведите диалог сами.</p>
+    <div class="demo">
+      <div class="rv">
+        <div class="list" id="scnList"></div>
+        <div class="hint"><i></i>подсвеченные кнопки в телефоне можно нажимать</div>
+      </div>
+      <div class="rv" style="--d:.15s">
+        <div class="phone"><div class="scr tg">
+          <div class="tg-h"><div class="tg-av">AI</div><div><b>AI-таргетолог</b><br><small>бот</small></div></div>
+          <div class="tg-b" id="chat"></div>
+          <div class="tg-f"><span>📊 Dashboard</span><em>Сообщение</em></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 MINI APP -->
+<section id="app" data-n="Mini App">
+  <div class="wrap">
+    <div class="eyebrow rv">Telegram Mini App</div>
+    <h2 class="rv">Дашборд и чат с агентом — <em>внутри Telegram</em>, без логинов и паролей</h2>
+    <p class="lead rv">Открывается кнопкой рядом с полем ввода. Реклама, заявки и продажи на одном экране, цифры обновляются каждые 5 минут. В макете справа всё кликабельно: переключайте вкладки, тяните бюджет, спросите агента.</p>
+    <div class="demo flip">
+      <div class="rv">
+        <div class="phone"><div class="scr ma" id="ma">
+          <div class="ma-top"><b>Dashboard</b><span>Пример · демо-данные</span></div>
+          <div class="ma-b on" data-t="rep">
+            <div class="st"><i></i>Реклама крутится · Ноябрь 2026</div>
+            <div class="hello">Доброе утро, Азиз</div>
+            <div class="kpi">
+              <div><small>Заявки месяца</small><b>142</b><em>+18%</em></div>
+              <div><small>Встречи</small><b>31</b><em>+9%</em></div>
+              <div><small>Договоры</small><b>7</b><em>+2</em></div>
+            </div>
+            <div class="tile ember"><h4>Цена заявки</h4><small>CPL · бюджет дня $10</small><div class="big">$1.84</div><small>цель ≤ $2.00</small><br><button data-go="chat">Обсудить в чате</button></div>
+            <div class="tile sim"><h4>Симулятор бюджета</h4><small>Тяните дневной бюджет — прогноз на месяц пересчитывается сразу</small>
+              <input id="simR" type="range" min="5" max="15" step="1" value="10" aria-label="Дневной бюджет">
+              <div style="display:flex;justify-content:space-between"><output id="simO"></output><small>потолок $15</small></div>
+              <div class="o"><div><small>Заявок / мес</small><b id="s1"></b></div><div><small>Встреч</small><b id="s2"></b></div><div><small>Договоров</small><b id="s3"></b></div><div><small>Цена договора</small><b id="s4"></b></div></div>
+            </div>
+            <div class="tile"><h4>Воронка: где теряются заявки</h4>
+              <div class="fn"><div>Заявка<i style="--w:100%"></i>142</div><div>Звонок<i style="--w:78%"></i>111</div><div class="bad">Встреча<i style="--w:22%"></i>31</div><div>КП<i style="--w:13%"></i>18</div><div>Договор<i style="--w:5%"></i>7</div></div>
+              <div class="leakbox"><b>Главная утечка:</b> звонок → встреча. На этом шаге застревают ≈80 клиентов в месяц.</div>
+            </div>
+            <div class="tile"><h4>Заметки агента</h4><div class="notes"><div><b class="s">Автостоп</b>Выключил «Креатив 3»: $6.40 без заявок</div><div><b class="n">Новый креатив</b>Ролик «кейс клиники» в библиотеке</div><div><b>Совет</b>12 заявок ждут звонка дольше 15 минут</div></div></div>
+          </div>
+          <div class="ma-b" data-t="cre">
+            <div class="st">База креативов · видео прямо в приложении</div>
+            <div class="adv"><div class="a1"><b>🏆 Масштабировать</b>«Кейс клиники»: договор дешевле всех — $41</div><div class="a2"><b>⚠️ Сливает</b>«Хук цена»: потрачено $6.40, заявок 0</div><div class="a3"><b>Ждут теста</b>2 креатива загружено, но не в рекламе</div></div>
+            <div class="crs">
+              <div class="cr"><div class="th" style="--g:linear-gradient(160deg,#3b2a6b,#16122a)"><span>● активно</span><em>🏆 дешевле всех</em></div><div class="in"><b>Кейс клиники</b>48 заявок · CPL $1.42<br>3 договора · $41</div></div>
+              <div class="cr"><div class="th" style="--g:linear-gradient(160deg,#6b2a2a,#2a1212)"><span>● пауза</span><em>⚠️ сливает</em></div><div class="in"><b>Хук «цена»</b>0 заявок · $6.40<br>выключен автостопом</div></div>
+              <div class="cr"><div class="th" style="--g:linear-gradient(160deg,#1f4a55,#0f1f26)"><span>● активно</span></div><div class="in"><b>Разбор отдела продаж</b>37 заявок · CPL $1.96<br>2 договора · $72</div></div>
+              <div class="cr"><div class="th" style="--g:linear-gradient(160deg,#4a431f,#201c0e)"><span>● новый</span></div><div class="in"><b>Интервью с РОПом</b>ещё не в рекламе<br><u style="color:#FF7A2E;text-decoration:none">Предложить запуск →</u></div></div>
+            </div>
+          </div>
+          <div class="ma-b" data-t="chat" id="maChat"></div>
+          <div class="ma-tabs">
+            <button class="on" data-tab="rep"><svg viewBox="0 0 24 24"><path d="M3 3v18h18M8 17V9m5 8V5m5 12v-6"/></svg>Отчёт</button>
+            <button data-tab="cre"><svg viewBox="0 0 24 24"><path d="M3 9h18v11H3zM3 9l2-5 4 1-1 4m4-4 4 1-1 4"/></svg>Креативы</button>
+            <button data-tab="chat"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-12 7l-5 1 1-4a8 8 0 1 1 16-4z"/></svg>Чат</button>
+          </div>
+        </div></div>
+      </div>
+      <div class="rv" style="--d:.15s">
+        <div class="list" id="maList">
+          <button class="on" data-tab="rep"><span>01</span><b>Отчёт: всё на одном экране</b><small>Заявки, встречи, договоры, цена заявки, воронка с главной утечкой и симулятор бюджета, который пересчитывает месяц на лету.</small></button>
+          <button data-tab="cre"><span>02</span><b>Креативы: по цене договора</b><small>Агент ранжирует ролики не по цене лида, а по тому, сколько стоит продажа. Видно, что масштабировать, что сливает и что ждёт теста.</small></button>
+          <button data-tab="chat"><span>03</span><b>Чат: спросите человеческим языком</b><small>Агент отвечает по живым цифрам на русском или узбекском. Действие предлагает кнопкой — и не даст сделать глупость.</small></button>
+        </div>
+        <p class="note" style="margin-top:18px">В макете — демо-данные. Для образовательных проектов Mini App расширяется: план/факт, когорты и окупаемость, рейтинг менеджеров, качество лидов.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 DAY -->
+<section id="day" data-n="Сутки агента">
+  <div class="wrap">
+    <div class="eyebrow rv">Сутки из жизни агента</div>
+    <h2 class="rv">Пока команда спит, обедает и в отпуске — он <em>на смене</em></h2>
+    <div class="dayb rv">
+      <div class="clock"><b id="clk">09:00</b><span id="clkS"></span></div>
+      <div class="hours" id="hours"></div>
+      <input id="hr" type="range" min="0" max="23" step="1" value="9" aria-label="Час суток">
+      <div class="ev">
+        <div><h3>В этот час</h3><ul id="evNow"></ul></div>
+        <div><h3>Круглосуточно, без перерывов</h3><ul>
+          <li><b>5 мин</b>новые заявки из Facebook попадают в CRM</li>
+          <li><b>30 мин</b>проверка биллинга и статуса кабинета</li>
+          <li><b>1 час</b>сверка: все ли оплаченные заявки дошли до продаж</li>
+          <li><b>1 час</b>обновление дашборда и AI-разбора</li>
+          <li><b>2 мин</b>склейка дублей сделок из разных каналов</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 RESULTS -->
+<section id="results" data-n="Результаты">
+  <div class="wrap">
+    <div class="eyebrow rv">Результаты</div>
+    <h2 class="rv">Четыре проекта, реальные цифры из кабинетов и CRM</h2>
+    <div class="tabs rv" id="caseTabs"></div>
+    <div class="case rv" id="case"></div>
+    <p class="note rv" style="margin-top:14px" id="caseNote"></p>
+  </div>
+</section>
+
+<!-- 9 DECISIONS -->
+<section id="log" data-n="Решения">
+  <div class="wrap">
+    <div class="eyebrow rv">Журнал решений</div>
+    <h2 class="rv">Как он думает: <em>шесть записей</em> из настоящего журнала</h2>
+    <p class="lead rv">Каждое решение записано с причиной и цифрами. Включая те, где агент отменил собственный вчерашний ход.</p>
+    <div class="dec" id="dec"></div>
+  </div>
+</section>
+
+<!-- 10 CONTROL -->
+<section id="control" data-n="Контроль">
+  <div class="wrap">
+    <div class="eyebrow rv">Контроль</div>
+    <h2 class="rv">Стопы — сам. Траты — <em>только по вашей кнопке</em></h2>
+    <p class="lead rv">Агент не может «сойти с ума» и слить бюджет: ограничения зашиты в код, а не в обещания.</p>
+    <div class="ctl rv">
+      <div style="--c:var(--ok)"><h3><i></i>Делает сам</h3><ul>
+        <li>Забирает заявки из Facebook в CRM и находит потерянные</li>
+        <li>Следит за биллингом, статусом кабинета и пикселем</li>
+        <li>Присылает отчёты, прогноз и алерты об аномалиях</li>
+        <li>Возвращает статусы сделок в Meta, чтобы алгоритм учился на оплатах</li>
+        <li>Раздаёт лиды менеджерам и напоминает о необработанных</li>
+        <li>Останавливает объявление, которое тратит без заявок <span class="note">(если вы включили автостоп)</span></li>
+      </ul></div>
+      <div style="--c:var(--red)"><h3><i></i>Только с вашим «да»</h3><ul>
+        <li>Повышение и перераспределение бюджета</li>
+        <li>Пауза работающих объявлений и групп</li>
+        <li>Запуск новых кампаний — создаются выключенными, включаете вы</li>
+        <li>Любая массовая запись в CRM — сначала показывает, что изменится</li>
+        <li>SMS-рассылки клиентам</li>
+      </ul></div>
+    </div>
+    <div class="guard">
+      <div class="rv"><b>±20%</b><span>максимальное изменение бюджета за день</span></div>
+      <div class="rv" style="--d:.08s"><b>3</b><span>срочных действия за раз — не больше, чтобы не тонуть в задачах</span></div>
+      <div class="rv" style="--d:.16s"><b>0</b><span>удалений: кампании только ставятся на паузу</span></div>
+      <div class="rv" style="--d:.24s"><b>100%</b><span>решений сохраняются в памяти с причиной и результатом</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 COMPARE -->
+<section id="compare" data-n="Сравнение">
+  <div class="wrap">
+    <div class="eyebrow rv">Что меняется</div>
+    <h2 class="rv">Привычное ведение рекламы и AI-таргетолог</h2>
+    <div class="cmp rv">
+      <div class="hd"><div></div><div>Обычно</div><div>С AI-таргетологом</div></div>
+      <div><div>По чему судят рекламу</div><div>Цена лида и CTR</div><div>Цена оплаты и доля мусорных лидов</div></div>
+      <div><div>Потерянные заявки</div><div>Узнают случайно, через недели</div><div>Сверка с CRM каждый час, добор автоматически</div></div>
+      <div><div>Отчёт</div><div>Раз в неделю, если напомнить</div><div>Каждое утро в 09:00 и по команде в любой момент</div></div>
+      <div><div>Сбой оплаты или блокировка</div><div>Реклама стоит до понедельника</div><div>Алерт в Telegram в течение 30 минут</div></div>
+      <div><div>Почему приняли решение</div><div>«Так чувствую»</div><div>Причина, цифры, ожидаемый эффект и сценарий «что если»</div></div>
+      <div><div>Реклама или продажи?</div><div>Спор маркетинга с отделом продаж</div><div>Видно, где утечка: в кабинете, в форме или на звонке</div></div>
+      <div><div>Отпуск, болезнь, смена подрядчика</div><div>Знания уходят вместе с человеком</div><div>Вся история решений остаётся у вас</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 PRICE -->
+<section id="price" data-n="Подключение">
+  <div class="wrap">
+    <div class="eyebrow rv">Модель оплаты</div>
+    <h2 class="rv">Фиксированная подписка. <em>Без процента</em> от бюджета</h2>
+    <div class="price">
+      <div class="pc main rv">
+        <div class="eyebrow" style="margin:0">Ежемесячно</div>
+        <div class="big">Одна сумма в месяц — и она не растёт вместе с вашей рекламой</div>
+        <p>Агенту не выгодно, чтобы вы тратили больше. Его задача — чтобы каждая оплата обходилась дешевле. Стоимость зависит от состава интеграций и обсуждается под ваш проект.</p>
+        <ul>
+          <li>AI-таргетолог в вашем рекламном кабинете Meta</li>
+          <li>Telegram-бот и Mini App для всей команды</li>
+          <li>Сквозная аналитика до оплаты на вашей CRM</li>
+          <li>Сверка и возврат потерянных заявок</li>
+          <li>Настройка под экономику бизнеса: чек, цели, пороги</li>
+          <li>Сопровождение и доработки</li>
+        </ul>
+        <div class="btns"><a class="btn p" id="ctaBtn" href="#end">Обсудить подключение</a></div>
+      </div>
+      <div class="pc rv" style="--d:.12s">
+        <h3 style="font-size:20px">Как проходит подключение</h3>
+        <div class="steps">
+          <div><b>Доступы</b><span>Рекламный кабинет Meta, CRM (AmoCRM или Bitrix24) и Telegram-группа команды.</span></div>
+          <div><b>Экономика</b><span>Фиксируем средний чек, целевую цену оплаты и пороги, по которым агент судит рекламу.</span></div>
+          <div><b>Аудит</b><span>Агент проходит историю кабинета и CRM: где мусор, где утечки, что реально продаёт.</span></div>
+          <div><b>Работа</b><span>Утренние отчёты, алерты, сверки и план действий — с первого дня.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 END -->
+<section id="end" data-n="Контакты">
+  <div class="wrap">
+    <h2 class="rv">Покажем на <em>вашем</em> кабинете</h2>
+    <p class="lead rv">Подключим агента к вашим данным и разберём: сколько на самом деле стоит оплата, сколько заявок не доходит до продаж и что можно выключить уже завтра.</p>
+    <div class="btns rv" id="endBtns"></div>
+  </div>
+</section>
+<footer><div class="wrap"><span>AI-таргетолог · 2026</span><span>Цифры — из рекламных кабинетов и CRM клиентов. Выручка — по дате закрытия сделки.</span></div></footer>
+
+<script>
+/* ====== контакт для кнопок: впишите ссылку, например https://t.me/username ====== */
+const CONTACT_URL = "";
+const CONTACT_LABEL = "Написать в Telegram";
+
+const $ = (s, r=document) => r.querySelector(s), $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+const RM = matchMedia("(prefers-reduced-motion:reduce)").matches;
+function fill(inp){ inp.style.setProperty("--p", ((inp.value-inp.min)/(inp.max-inp.min)*100)+"%"); }
+function seen(el, fn, th=.3){ const o = new IntersectionObserver(e => { if(e[0].isIntersecting){ o.disconnect(); fn(); } }, {threshold:th}); o.observe(el); }
+
+/* ---- contact ---- */
+(() => {
+  const box = $("#endBtns");
+  if (CONTACT_URL) {
+    box.innerHTML = `<a class="btn p" href="${CONTACT_URL}" target="_blank" rel="noopener">${CONTACT_LABEL} →</a>`;
+  } else {
+    box.innerHTML = `<a class="btn s" href="#hero">↑ Посмотреть ещё раз</a>`;
+  }
+})();
+
+/* ---- reveal, progress, dots ---- */
+const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }), {threshold:.12});
+$$(".rv").forEach(e => io.observe(e));
+const secs = $$("section[data-n]"), dots = $("#dots");
+dots.innerHTML = secs.map(s => `<a href="#${s.id}" aria-label="${s.dataset.n}"><span>${s.dataset.n}</span></a>`).join("");
+const dotEls = $$("a", dots);
+function onScroll(){
+  const h = document.documentElement;
+  $("#prog").style.width = (h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+"%";
+  let cur = 0; secs.forEach((s,i) => { if(s.getBoundingClientRect().top < innerHeight*.45) cur = i; });
+  dotEls.forEach((d,i) => d.classList.toggle("on", i===cur));
+}
+addEventListener("scroll", onScroll, {passive:true}); onScroll();
+
+/* ---- counters ---- */
+$$(".cnt").forEach(el => seen(el, () => {
+  const to = +el.dataset.to, dec = +(el.dataset.dec||0), t0 = performance.now(), dur = RM ? 1 : 1800;
+  (function tick(t){ const k = Math.min(1,(t-t0)/dur), v = to*(1-Math.pow(1-k,4));
+    el.textContent = dec ? v.toFixed(dec).replace(".",",") : fmt(v); if(k<1) requestAnimationFrame(tick); })(t0);
+}, .6));
+
+/* ---- hero network canvas ---- */
+(() => {
+  const c = $("#net"), x = c.getContext("2d"); let W,H,P=[];
+  function size(){ const r = c.getBoundingClientRect(), d = Math.min(devicePixelRatio||1,2); W=r.width; H=r.height; c.width=W*d; c.height=H*d; x.setTransform(d,0,0,d,0,0);
+    const n = Math.round(W*H/26000); P = Array.from({length:n}, () => ({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.6+.6})); }
+  function draw(){ x.clearRect(0,0,W,H);
+    for(const p of P){ p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>W) p.vx*=-1; if(p.y<0||p.y>H) p.vy*=-1; }
+    for(let i=0;i<P.length;i++) for(let j=i+1;j<P.length;j++){ const a=P[i],b=P[j],d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<130){ x.strokeStyle=`rgba(255,46,63,${(1-d/130)*.22})`; x.lineWidth=1; x.beginPath(); x.moveTo(a.x,a.y); x.lineTo(b.x,b.y); x.stroke(); } }
+    for(const p of P){ x.fillStyle="rgba(255,90,100,.7)"; x.beginPath(); x.arc(p.x,p.y,p.r,0,7); x.fill(); }
+    if(!RM) requestAnimationFrame(draw); }
+  size(); draw(); addEventListener("resize", size);
+})();
+
+/* ---- telegram engine ---- */
+function md(s){ return s.replace(/\*(.+?)\*/g,"<b>$1</b>").replace(/_(.+?)_/g,"<i>$1</i>").replace(/`(.+?)`/g,"<code>$1</code>"); }
+function Chat(box){
+  let token = 0;
+  const api = {
+    box,
+    add(html, cls="bot"){ const m = document.createElement("div"); m.className = "msg "+cls; m.innerHTML = md(html); box.append(m); api.down(); return m; },
+    day(t){ const d = document.createElement("div"); d.className="day"; d.textContent=t; box.append(d); },
+    kb(rows, onClick){ const k = document.createElement("div"); k.className="kb";
+      rows.forEach(r => { const d = document.createElement("div"); r.forEach(b => { const btn = document.createElement("button"); btn.textContent = b.t; if(b.a){ btn.classList.add("hot"); btn.onclick = () => onClick(b.a, k); } d.append(btn); }); k.append(d); });
+      box.append(k); api.down(); return k; },
+    async bot(html, wait=650){ const my = token; const t = document.createElement("div"); t.className="typing"; t.innerHTML="<i></i><i></i><i></i>"; box.append(t); api.down(); await sleep(RM?0:wait); t.remove(); if(my!==token) throw 0; return api.add(html); },
+    async me(html){ const my = token; await sleep(RM?0:350); if(my!==token) throw 0; return api.add(html,"me"); },
+    down(){ box.scrollTo({top:box.scrollHeight, behavior:RM?"auto":"smooth"}); },
+    async run(fn){ token++; box.innerHTML=""; try{ await fn(api); }catch(e){ if(e!==0) throw e; } }
+  };
+  return api;
+}
+
+const REPORT = `☀️ Доброе утро, Азиз!
+_Отчёт за вчерашний день_
+
+📊 *Онлайн-школа | 16.07.2026*
+💰 $252.38  🎯 286 лидов  🟡 CPL $0.88
+
+🟢 Target 3 [welcome] — 3 лид, CPL $0.26
+🟡 target.2 ABO — 29 лид, CPL $0.73
+🟡 creative 55 — 46 лид, CPL $0.80
+🔴 target.8 ABO — 1 лид, CPL $5.04`;
+
+const ACTION = `*P0* · Пауза target.8 [welcome] ABO
+
+_CPL $5.04 при бенчмарке $0.88, 1 лид за $5 — сливает бюджет_
+
+*Эффект:* −$5/день, средний CPL −3%
+
+*Сценарий:* Если выключить → CPL ~$0.85. Если нет → −$35 за неделю.
+
+📊 За 14 дней было 3 принято, 1 пропущено похожих предложений.`;
+
+const SCN = [
+ {t:"Утренний отчёт", d:"Каждый день в 09:00 всем участникам команды: расход, лиды, цена лида и светофор по кампаниям.",
+  run: async c => { c.day("сегодня, 09:00"); await c.bot(REPORT, 900);
+    await sleep(700); await c.me("/forecast");
+    await c.bot(`*📊 Прогноз до конца месяца*\n\nЛиды: *8420* (план: 9000)\nБюджет: *$7400* (план: $7800)\nCPL: *$0.88*\n\nНакоплено: 4600 лид · $4050\nТренд: +2.4 лид/день\n14 дней осталось`); }},
+ {t:"«Что делать сейчас»", d:"Агент анализирует кабинет и приносит до трёх действий с причиной, эффектом и сценарием «что если». Решение запоминается.",
+  run: async c => { await c.me("/actions"); const w = await c.bot("🧠 Анализирую кабинет (30-60 сек)…", 400); await sleep(RM?0:1300); w.remove();
+    await c.bot("*🎯 Что делать сейчас*\n_Портфель стабилен, CPL $0.88 в норме; два адсета тянут средний CPL вверх._", 300);
+    const m = await c.bot(ACTION, 700);
+    c.kb([[{t:"✅ Принять",a:"ok"},{t:"✗ Пропустить",a:"skip"},{t:"💤 Снуз 24ч",a:"snz"}],[{t:"🔗 Открыть в Ads Manager"}]], async (a,k) => {
+      k.remove(); m.insertAdjacentHTML("beforeend", `<span class="done">${{ok:"✓ Принято",skip:"✗ Пропущено",snz:"💤 Отложено на 24ч"}[a]}</span>`);
+      await c.bot("Записал в память. В следующем анализе учту это решение и покажу, что оно дало.", 600); }); }},
+ {t:"Потерянные заявки", d:"Сверка лид-форм Facebook с CRM. Всё, что оплачено, но не дошло до менеджеров, возвращается одной кнопкой — или автоматически раз в час.",
+  run: async c => { await c.me("/missing");
+    await c.bot("*🔍 Сверка FB ↔ CRM (сегодня)*\n\n📱 FB Instant Form: `140`\n💾 В CRM:          `136` (97%)\n❗ Потеряно:        `4`", 900);
+    c.kb([[{t:"🔄 Загрузить 4 пропавших",a:"load"}]], async (a,k) => { k.remove();
+      await c.bot("✅ *Загрузка завершена*\n\n📤 Загружено: `4` лидов\n\n📊 Сейчас: `140` / `140` (100%)\n✅ Все лиды в CRM", 1100); }); }},
+ {t:"Алерт: реклама встала", d:"Каждые 30 минут агент проверяет кабинет. Блокировка, неоплаченный счёт или слишком низкий расход — вы узнаете сразу, а не в понедельник.",
+  run: async c => { c.day("суббота, 14:30");
+    await c.bot("⚠️ *Низкий расход бюджета!*\n\nВремя: 14:30\nПотрачено: *$3.10*\nОжидалось: ~$45.31 (60% дня прошло)\nДневной бюджет: $75/день\n\nПроверь биллинг или статус объявлений.", 800);
+    await sleep(900);
+    await c.bot("🚨 *КРИТИЧНО — Проблема с аккаунтом!*\n\nСтатус: *DISABLED*\nРеклама не откручивается!\n\n👉 Проверь биллинг:\nbusiness.facebook.com/billing", 900); }},
+ {t:"Отчёт отдела продаж", d:"Воронка из CRM, качество лидов, причины отказов и главное — цена качественного лида и цена продажи.",
+  run: async c => { await c.me("/sales"); await c.bot("*Выберите период:*", 400);
+    c.kb([[{t:"📅 Вчера",a:"y"}],[{t:"📅 7 дней",a:"y"}],[{t:"📅 Этот месяц",a:"y"}]], async (a,k) => { k.remove();
+      await c.bot("📊 *Sales отчёт*\n📅 Вчера (15.07.2026)\n\n*Лидов:* `286`\n\n📞 Звонок совершён — `70` · 24.5%\n💬 Разговор состоялся — `41` · 14.3%\n🏆 Успешно реализовано — `9` · 3.1%\n\n*Качество:*\n✅ Качественные: `120` · 42.0%\n❌ Мусор: `61` · 21.3%\n\n*Стоимость:*\n💰 Расход: `$252.38`\n💵 CPL:  `$0.88` (за лид)\n💎 CPQL: `$2.10` (за качественного)\n🏆 CPA:  `$28.04` (за продажу)", 1000); }); }},
+ {t:"Автостоп", d:"Объявление потратило втрое больше цели и не принесло ни одной заявки — агент выключает его сам и сообщает. Последнее живое объявление в группе не тронет.",
+  run: async c => { c.day("сегодня, 03:12");
+    await c.bot("⛔️ *Автостоп: объявление выключено*\n\n🎬 Креатив 3 — хук «цена»\n📂 Отдел продаж — 25-45\n💸 $6.40 · заявок 0\n📏 потрачено $6.40 (≥ 3× цели $2), заявок 0\n\nДеньги на нём больше не тратятся. Вернуть — через чат в Mini App («включи обратно …»).", 900); }},
+ {t:"Раздача лидов менеджерам", d:"Лид уходит свободному менеджеру, сильным — чуть больше. Не взял за 10 минут — напоминание, затем передача дежурному. Раз в час — сводка руководителю.",
+  run: async c => { c.day("сегодня, 14:00");
+    await c.bot("🔀 *Распределитель · 13:00–14:00*\n\nЗа час: новых FB/IG 18, система раздала 18\nОбработано 15, среднее время 9 мин (медиана 6)\nНапоминаний 3 · дежурным 1\n\nС начала дня: лидов 131, обработано 117\nДо обработки: среднее 12, медиана 7\nЗа 15 мин: 78% · за час: 95%", 900); }}
+];
+const chat = Chat($("#chat"));
+const scnList = $("#scnList");
+scnList.innerHTML = SCN.map((s,i) => `<button data-i="${i}"><span>${String(i+1).padStart(2,"0")}</span><b>${s.t}</b><small>${s.d}</small></button>`).join("");
+function playScn(i){ $$("button",scnList).forEach((b,j) => b.classList.toggle("on", i===j)); chat.run(SCN[i].run); }
+scnList.onclick = e => { const b = e.target.closest("button"); if(b) playScn(+b.dataset.i); };
+$$("button",scnList)[0].classList.add("on");
+seen($("#chat"), () => playScn(0));
+
+/* hero chat: loop */
+(() => { const hc = Chat($("#heroChat"));
+  const loop = async c => { c.day("сегодня, 09:00"); await c.bot(REPORT, 1000); await sleep(1600);
+    const m = await c.bot("*P0* · Пауза target.8 ABO\n_CPL $5.04 при бенчмарке $0.88 — сливает бюджет_\n*Эффект:* −$5/день", 900);
+    const k = c.kb([[{t:"✅ Принять"},{t:"✗ Пропустить"},{t:"💤 Снуз"}]]); await sleep(1900);
+    k.remove(); m.insertAdjacentHTML("beforeend",'<span class="done">✓ Принято</span>'); await sleep(1500);
+    await c.bot("*🔍 Сверка FB ↔ CRM*\n📱 В формах: `140` · 💾 в CRM: `136`\n❗ 4 заявки потеряны — вернул в CRM ✅", 900);
+    if(!RM){ await sleep(5200); hc.run(loop); } };
+  hc.run(loop);
+})();
+
+/* ---- brain pipeline ---- */
+const NODES = [
+ {i:"01", t:"Данные", h:"Кабинет и CRM в одной таблице", p:"Агент забирает статистику из Meta Ads и сделки из CRM и связывает их: объявление → заявка → сделка → оплата.",
+  l:["Расход, показы, клики, лиды — по кампаниям, объявлениям и часам","Статусы сделок, причины отказа, оплаты, менеджеры","Связка по ID объявления и ID заявки Facebook","Видно, какой ролик принёс деньги, а не просто заявки"]},
+ {i:"02", t:"7 анализаторов", h:"Сначала считает математика", p:"Цифры проходят через семь независимых проверок на обычном коде. Никакой «интуиции AI» на этом шаге — только пороги и статистика.",
+  l:["Аномалии: расход без заявок, падение CTR больше 30%","Выгорание креатива: частота ≥ 3, рост цены лида на 30%","Лидеры и аутсайдеры относительно цели","Фаза обучения: 50 конверсий за 7 дней","Пересечение аудиторий между группами","Прогноз до конца месяца по тренду 14 дней","Проверка креатива перед запуском: формат, длительность"]},
+ {i:"03", t:"База знаний", h:"Знает ваш бизнес, а не «рекламу вообще»", p:"У агента есть документ с экономикой именно вашего проекта. Он важнее любых общих правил маркетинга.",
+  l:["Средний чек и целевая цена оплаты","Пороги: когда масштабировать, когда выключать","Формула бюджета от плана продаж","Правила Meta 2026: Conversions API, лид-формы, качество событий","База по performance-маркетингу на 1 100+ строк"]},
+ {i:"04", t:"Память", h:"Помнит, что советовал и что из этого вышло", p:"Каждое предложение записывается: что рекомендовал, что вы сделали, какой был эффект. Следующий анализ начинается с этого.",
+  l:["«За 14 дней 3 похожих предложения принято, 1 пропущено»","Не повторяет совет, который вы отклонили без причины","Видит, сработал ли прошлый подъём бюджета","История остаётся у вас при любой смене команды"]},
+ {i:"05", t:"План", h:"Claude собирает решение", p:"Модель Claude получает выводы анализаторов, базу знаний и память — и возвращает структурированный план, а не простыню текста.",
+  l:["Прогноз месяца: отстаём, в графике, опережаем","Действия с приоритетом P0 / P1 / P2","У каждого: почему, ожидаемый эффект, сценарий «что если»","Не больше трёх срочных действий за раз","Отдельно — наблюдения и задачи на неделю"]},
+ {i:"06", t:"Вы", h:"Последнее слово — за человеком", p:"План приходит в Telegram. Под каждым действием три кнопки. Всё, что тратит деньги, выполняется только после подтверждения.",
+  l:["Принять · Пропустить · Отложить на 24 часа","Ссылка сразу на нужное объявление в Ads Manager","Агент откажется от плохой команды и объяснит цифрами","Решение уходит в память — круг замыкается"]}
+];
+const pipe = $("#pipe"), pipeD = $("#pipeD"); let pipeI = 0, pipeT;
+pipe.innerHTML = NODES.map((n,i) => `<button class="node" data-i="${i}"><u>${n.i}</u><b>${n.t}</b></button>`).join("");
+function showNode(i){ pipeI = i; $$(".node",pipe).forEach((n,j) => n.classList.toggle("on", j===i)); const n = NODES[i];
+  pipeD.innerHTML = `<div><div class="eyebrow">Шаг ${n.i}</div><h3>${n.h}</h3><p>${n.p}</p></div><ul>${n.l.map((x,k) => `<li style="animation-delay:${k*.06}s">${x}</li>`).join("")}</ul>`; }
+pipe.onclick = e => { const b = e.target.closest(".node"); if(b){ clearInterval(pipeT); showNode(+b.dataset.i); } };
+showNode(0);
+seen(pipe, () => { if(!RM && innerWidth>860) pipeT = setInterval(() => showNode((pipeI+1)%NODES.length), 4200); });
+
+/* ---- playground ---- */
+const pg = {goal:$("#pgGoal"), cpl:$("#pgCpl"), spend:$("#pgSpend"), freq:$("#pgFreq")};
+function verdict(){
+  const g=+pg.goal.value, c=+pg.cpl.value, s=+pg.spend.value, f=+pg.freq.value, k=c/g;
+  $("#oGoal").textContent="$"+g.toFixed(2); $("#oCpl").textContent="$"+c.toFixed(2); $("#oSpend").textContent="$"+s; $("#oFreq").textContent=f.toFixed(1);
+  Object.values(pg).forEach(fill);
+  let v;
+  if(s>=20 && k>2) v={c:"var(--red)",tag:"P0 · ПАУЗА",h:"Выключить объявление",p:`Цена лида в ${k.toFixed(1).replace(".",",")} раза выше цели при расходе $${s}. Дальше будет только дороже — бюджет лучше отдать лидерам.`,r:"правило: расход ≥ $20 и цена лида > 2× цели"};
+  else if(f>=4.5) v={c:"var(--red)",tag:"P0 · КРЕАТИВ",h:"Креатив выгорел — менять",p:`Частота ${f.toFixed(1)}: аудитория видела ролик слишком много раз. Нужен новый креатив, а не новый бюджет.`,r:"правило: частота ≥ 4,5 — критично"};
+  else if(s<20) v={c:"var(--t3)",tag:"ЖДЁМ",h:"Рано судить",p:`Потрачено всего $${s}. Агент не делает выводов, пока объявление не набрало данных, — иначе можно выключить будущего лидера.`,r:"правило: решения о паузе — от $20 расхода"};
+  else if(k<0.7 && f<3) v={c:"var(--ok)",tag:"P1 · МАСШТАБ",h:"Поднять бюджет на 20%",p:`Цена лида на ${Math.round((1-k)*100)}% ниже цели, частота в норме. Повышаем плавно, чтобы не сбить обучение алгоритма, и проверяем цену оплаты.`,r:"правило: цена лида < 0,7× цели, частота < 3, шаг не больше 20% в день"};
+  else if(f>=3) v={c:"var(--warn)",tag:"P1 · ВНИМАНИЕ",h:"Готовить замену креативу",p:`Частота ${f.toFixed(1)} — первые признаки выгорания. Пока работает, но следующий ролик пора ставить в тест.`,r:"правило: частота ≥ 3,0 — предупреждение"};
+  else v={c:"var(--info)",tag:"НОРМА",h:"Не трогать",p:"Показатели в коридоре. Лучшее, что можно сделать с работающим объявлением, — не мешать ему.",r:"правило: каждое лишнее изменение сбрасывает обучение"};
+  const el=$("#verdict"); el.style.setProperty("--c",v.c);
+  el.innerHTML=`<span class="tag">${v.tag}</span><h3>${v.h}</h3><p>${v.p}</p><div class="rule">${v.r}</div>`;
+}
+Object.values(pg).forEach(i => i.oninput = verdict); verdict();
+
+/* ---- mini app ---- */
+const ma = $("#ma");
+function maTab(t){ $$(".ma-b",ma).forEach(b => b.classList.toggle("on", b.dataset.t===t)); $$(".ma-tabs button",ma).forEach(b => b.classList.toggle("on", b.dataset.tab===t)); $$("#maList button").forEach(b => b.classList.toggle("on", b.dataset.tab===t)); }
+ma.addEventListener("click", e => { const b = e.target.closest("[data-tab],[data-go]"); if(b) maTab(b.dataset.tab||b.dataset.go); });
+$("#maList").onclick = e => { const b = e.target.closest("button"); if(b) maTab(b.dataset.tab); };
+const simR = $("#simR");
+function sim(){ const b=+simR.value, leads=Math.round(b*30/1.84), meet=Math.round(leads*.22), deals=Math.max(1,Math.round(meet*.23));
+  $("#simO").textContent="$"+b+" / в день"; $("#s1").textContent=leads; $("#s2").textContent=meet; $("#s3").textContent=deals; $("#s4").textContent="$"+Math.round(b*30/deals); fill(simR); }
+simR.oninput = sim; sim();
+
+const QA = [
+ {q:"Какой креатив сливает бюджет?", a:"Хук «цена»: потрачено $6.40 при цели $2 за заявку — и ни одной заявки. Остальные три ролика в норме, лучший — «Кейс клиники» с договором за $41.\n\nПредлагаю выключить и отдать его бюджет лидеру.", act:"Подтвердить: пауза «Хук цена»", cf:"В кабинете будет изменение: пауза объявления «Хук цена». Подтверждаете?"},
+ {q:"Подними бюджет до $20 в день", a:"Так не стоит. $10 → $20 — это +100% за раз: алгоритм уйдёт на переобучение, и цена заявки вырастет.\n\nБезопасный шаг — не больше +30% в сутки. Сегодня максимум $13. Если цена заявки удержится ниже $2 — завтра поднимем ещё.", act:"Подтвердить: бюджет $10 → $13", cf:"В кабинете будет изменение: дневной бюджет $10 → $13. Подтверждаете?"},
+ {q:"Как быстрее обрабатывать лиды?", a:"Сейчас от заявки до первого звонка — медиана 47 минут, и 12 заявок ждут дольше 15 минут.\n\nТри шага: 1) ночные заявки (22–09) обзванивать первыми с утра; 2) включить напоминание менеджеру на 5-й минуте; 3) пик заявок — вторник 10–13, поставьте на это время второго человека."}
+];
+const maChat = $("#maChat");
+function chatHome(){ maChat.innerHTML = `<div class="orb"></div><div class="c-intro"><b>Привет! Я — AI-таргетолог.</b>Знаю кабинет, CRM и бриф клиента. Сам в кабинете ничего не меняю: предлагаю действие, вы подтверждаете.</div><div class="c-chips">${QA.map((x,i) => `<button data-q="${i}">${x.q}</button>`).join("")}</div>`; }
+chatHome();
+maChat.addEventListener("click", async e => {
+  const q = e.target.closest("[data-q]"), act = e.target.closest(".act:not(.ok)");
+  if(q){ const it = QA[+q.dataset.q]; maChat.innerHTML = "";
+    const u = document.createElement("div"); u.className="cm u"; u.textContent=it.q; maChat.append(u);
+    const a = document.createElement("div"); a.className="cm a"; a.textContent="Думаю…"; maChat.append(a); await sleep(RM?0:900);
+    a.textContent=""; const words = it.a.split(/(\s+)/);
+    for(const w of words){ a.textContent += w; maChat.scrollTop = maChat.scrollHeight; if(!RM) await sleep(22); }
+    if(it.act){ const b = document.createElement("button"); b.className="act"; b.textContent="🛡 "+it.act; b.dataset.cf=it.cf; maChat.append(b); }
+    const back = document.createElement("div"); back.className="c-chips"; back.innerHTML='<button data-home>← Другие вопросы</button>'; maChat.append(back); maChat.scrollTop = maChat.scrollHeight; }
+  else if(act){ const sh = document.createElement("div"); sh.className="sheet"; sh.innerHTML=`<div><p>${act.dataset.cf}</p><button data-n>Отмена</button><button class="y" data-y>OK</button></div>`; ma.append(sh);
+    sh.onclick = ev => { if(ev.target.closest("[data-y]")){ act.className="act ok"; act.textContent="✓ Выполнено"; } if(ev.target.closest("button")) sh.remove(); }; }
+  else if(e.target.closest("[data-home]")) chatHome();
+});
+
+/* ---- day ---- */
+const HRS = $("#hours"), hr = $("#hr"); let dayT;
+const EV = h => { const e = [];
+  if(h>=22 || h<8) e.push(["ночь","Менеджеры спят — заявки копятся в CRM, утром уйдут первыми в очереди"],["монитор","Объявление без заявок выключится автостопом, не дожидаясь утра"]);
+  if(h===8) e.push(["08:00","Открывается окно раздачи лидов менеджерам"],["08:00","Ночные заявки распределены по свободным менеджерам"]);
+  if(h===9) e.push(["09:00","Утренний отчёт за вчера — всей команде, каждому на его языке"],["09:00","Задачи дня — в боте сотрудников"]);
+  if(h>=9 && h<=22) e.push([`${String(h).padStart(2,"0")}:00`,"Часовая сводка: сколько лидов пришло, роздано и обработано"]);
+  if(h>=8 && h<22) e.push(["5 и 10 мин","Напоминание менеджеру, который не взял лид. После двух пропусков — дежурному"]);
+  if(h>=10 && h<=20) e.push(["руководителю","Список просроченных задач отдела продаж"]);
+  if(h>=12 && h<=21) e.push(["контроль","Проверка темпа расхода: если потрачено меньше 10% дня — алерт"]);
+  if(h===20) e.push(["20:00","Итог дня — в боте сотрудников"]);
+  if(h===22) e.push(["22:00","Окно раздачи закрывается, дежурный режим"]);
+  return e; };
+HRS.innerHTML = Array.from({length:24}, (_,h) => `<i data-h="${h}" class="${h>=8&&h<22?"w":""} ${[9,20].includes(h)?"e":""}"></i>`).join("");
+function setHour(h){ hr.value=h; fill(hr); $("#clk").textContent=String(h).padStart(2,"0")+":00";
+  $("#clkS").textContent = h>=8&&h<22 ? "рабочее окно отдела продаж" : "команда отдыхает, агент работает";
+  $$("i",HRS).forEach((i,j) => i.classList.toggle("on", j===h));
+  $("#evNow").innerHTML = EV(h).map((e,k) => `<li style="animation-delay:${k*.05}s"><b>${e[0]}</b>${e[1]}</li>`).join(""); }
+hr.oninput = () => { clearInterval(dayT); setHour(+hr.value); };
+HRS.onclick = e => { const i = e.target.closest("i"); if(i){ clearInterval(dayT); setHour(+i.dataset.h); } };
+setHour(9);
+seen($(".dayb"), () => { if(!RM) dayT = setInterval(() => setHour((+hr.value+1)%24), 2200); });
+
+/* ---- results ---- */
+const M = ["Май","Июнь","Июль","Авг","Сен","Окт"];
+const SPEND = ["$7,9K","$8,4K","$8,0K","$8,9K","$10,7K","$12,1K"];
+const SER = {
+  rev:{n:"Выручка", v:[590,945,900,902,1164,1040], f:v=>v+" млн"},
+  sales:{n:"Продажи", v:[284,364,363,346,435,368], f:v=>v},
+  roas:{n:"Окупаемость", v:[6.0,9.0,9.0,8.1,8.7,6.9], f:v=>String(v.toFixed(1)).replace(".",",")+"×"},
+  cpa:{n:"Цена продажи", v:[27.7,23.2,22.1,25.7,24.7,32.8], f:v=>"$"+String(v.toFixed(1)).replace(".",",")}
+};
+const CASES = [
+ {t:"Онлайн-школа №1", sub:"Русский язык для взрослых · Узбекистан · AmoCRM", h:"Выручка выросла в 1,6 раза за месяц при том же рекламном бюджете", chart:true,
+  facts:[["590 → 945 <small>млн сум</small>","Май → июнь. Бюджет остался около $8 тыс. Рост дали закрытая дыра между Facebook и CRM и порядок в обработке заявок."],["10 893","заявки агент нашёл в лид-формах и вернул в CRM за полгода. В мае интеграция теряла от четверти до половины."],["$39 против $301","цена оплаты у разных групп при одинаковой цене лида. После аудита бюджет перераспределили по цене оплаты."]],
+  note:"Источник: выгрузка рекламного кабинета и AmoCRM. Выручка — вся выручка CRM по дате закрытия сделки, курс 12 500 сум/$. Октябрь слабее сентября — это тоже видно на графике: агент показывает цифры как есть."},
+ {t:"Онлайн-школа №2", sub:"Русский язык · Узбекистан · Bitrix24", h:"Мусорных лидов стало в 2,3 раза меньше, цена оплаты упала с $67 до $37",
+  facts:[["31,8% → 13,7%","доля бракованных лидов с июня по август — после перестройки форм и аудиторий по данным CRM."],["5,4×","окупаемость рекламы в сентябре: $4 120 расхода, 5 531 заявка, цена оплаты $37 против $67 месяцем раньше."],["1 395","заявок не доехали до Bitrix24 — агент ежечасной сверкой вернул их отделу продаж. До этого терялось около 11% в день."]],
+  more:[["$12,4","за оплату у лучшей лид-формы в ноябре при средней $32,6. Агент считает цену клиента по каждой форме отдельно."],["71%","продаж делают 7 менеджеров из 28. Агент показал, что рост заявок упирается в обработку, и скорость потока стали регулировать под отдел продаж."],["2 номера","в каждой четвёртой заявке — агент нашёл и исправил формы, из-за которых менеджеры звонили не туда."]],
+  note:"Источник: отчёты по кабинету и Bitrix24 за июнь–ноябрь 2026."},
+ {t:"Школа контент-маркетинга", sub:"Онлайн-курс · Узбекистан", h:"Лид по $0,38 и окупаемость около +90% за 20 дней октября",
+  facts:[["$0,38","цена лида 1–20 октября: $809 расхода, 2 106 лидов, из них 282 квалифицированных."],["19,8 <small>млн сум</small>","выручка с этих заявок — 8 продаж, окупаемость рекламы около +90% за неполный месяц."],["2 653","заявки агент сам перенёс в CRM за месяц, пока штатная интеграция работала рывками."]],
+  more:[["19 700 против 12 400","сум выручки с одного лида: лид-форма против сайта. Агент посчитал по продажам и перевёл трафик на форму."],["0 продаж","дали «скидочные» креативы при цене лида $1,52. Креатив-лидер принёс 1 855 лидов по $0,70 и 6 продаж."],["97%","новых компаний в CRM были пустышками, в которых прятались рабочие номера клиентов. Найдено и исправлено."]],
+  note:"Источник: рекламный кабинет и CRM, июнь–октябрь 2026."},
+ {t:"IT-школа для детей", sub:"Офлайн · Ташкент · 7 филиалов · AmoCRM", h:"Агент нашёл, что отчётная цена лида была занижена вдвое",
+  facts:[["×2","во столько были завышены лиды в отчётах из-за двойного счёта событий. Реальная цена лида оказалась вдвое выше — от неё и стали принимать решения."],["$203","за клиента и $12 за квалифицированного лида — впервые посчитано по каждому креативу, а не «в среднем по кабинету»."],["153","события о продажах агент вернул в Meta через Conversions API, чтобы алгоритм учился на покупателях, а не на заявках."]],
+  more:[["$10–18","цена лида у пяти объявлений, которые агент предложил выключить. Бюджет ушёл в лидера: $144 → $173 в день."],["3 дня","подряд росла цена лида у одного из роликов ($3,85 → $8,79) — пауза до того, как он съел недельный бюджет."],["38%","лидов оказались квалифицированными — сверка 804 заявок Facebook со статусами в CRM."]],
+  note:"Источник: журнал агента, февраль–март 2026. Помесячной выручки в данных нет, поэтому она не показана."}
+];
+const caseTabs = $("#caseTabs"), caseEl = $("#case");
+caseTabs.innerHTML = CASES.map((c,i) => `<button data-i="${i}">${c.t}</button>`).join("");
+function factHTML(f){ return f.map(x => `<div class="fact"><b>${x[0]}</b><p>${x[1]}</p></div>`).join(""); }
+function drawChart(k){ const s = SER[k], mx = Math.max(...s.v);
+  $(".chart",caseEl).innerHTML = s.v.map((v,i) => `<div class="col"><b>${s.f(v)}</b><i style="--d:${i*.07}s" data-h="${v/mx*82}"></i></div>`).join("");
+  $$(".seg button",caseEl).forEach(b => b.classList.toggle("on", b.dataset.k===k));
+  requestAnimationFrame(() => requestAnimationFrame(() => $$(".chart i",caseEl).forEach(i => i.style.height = i.dataset.h+"%"))); }
+function showCase(i){ const c = CASES[i]; $$("button",caseTabs).forEach((b,j) => b.classList.toggle("on", i===j));
+  caseEl.innerHTML = `<div class="case-h"><div><p>${c.sub}</p><h3 style="margin-top:10px;max-width:26ch">${c.h}</h3></div>${c.chart?`<div class="seg">${Object.entries(SER).map(([k,s]) => `<button data-k="${k}">${s.n}</button>`).join("")}</div>`:""}</div>`
+   + (c.chart?`<div class="chart"></div><div class="xl">${M.map((m,j) => `<div>${m}<small>реклама ${SPEND[j]}</small></div>`).join("")}</div>`:"")
+   + `<div class="facts">${factHTML(c.facts)}</div>` + (c.more?`<div class="facts" style="margin-top:14px">${factHTML(c.more)}</div>`:"");
+  $("#caseNote").textContent = c.note; if(c.chart) drawChart("rev"); }
+caseTabs.onclick = e => { const b = e.target.closest("button"); if(b) showCase(+b.dataset.i); };
+caseEl.addEventListener("click", e => { const b = e.target.closest(".seg button"); if(b) drawChart(b.dataset.k); });
+showCase(0); seen(caseEl, () => drawChart("rev"));
+
+/* ---- decisions ---- */
+const DEC = [
+ ["09.10","g","МАСШТАБ","Бюджет — тем, кто продаёт","Поднял бюджет четырём группам с ценой оплаты <b>$36–40</b> при цели $37. Общий бюджет: <b>$340 → $381</b> в день. По цене лида эти группы от остальных не отличались."],
+ ["26.09","y","ОТКАТ","Отменил собственный разгон","Накануне поднял бюджет пяти группам на 20–30%. За сутки цена лида выросла на <b>26%</b>, конверсия клика в заявку упала с 9,7% до 7,9%. Вернул как было."],
+ ["22.09","","ПАУЗА","Креатив, который не продаёт","Ролик потратил <b>$513</b> на трёх аудиториях и принёс одну продажу. Выключен, а лучшая аудитория с ценой оплаты $28 получила прибавку."],
+ ["17.10","y","ФОРМА","Нашёл, почему лиды мусорные","В 15% заявок форма подставляла старый номер без мессенджеров: качественных там было <b>5% против 39%</b>. Добавил обязательный вопрос про рабочий номер."],
+ ["14.10","","КАЧЕСТВО","Судит по оплатам, а не по лидам","Группа А3: 11% качественных лидов и 0 оплат — на паузу. Группа А1: 41% качественных и 5 оплат — бюджет повышен. Цена лида у обеих была нормальной."],
+ ["16.11","","ПОСЛЕ АКЦИИ","Вовремя остановил акционные группы","После распродажи три группы давали продажу за <b>$155–230</b> при пороге $100. Поставил на паузу $249 в день и вернул связки с ценой продажи $25–43."]
+];
+$("#dec").innerHTML = DEC.map((d,i) => `<div class="d rv" style="--d:${i%3*.08}s"><div class="top"><span>${d[0]}.2026</span><span class="k ${d[1]}">${d[2]}</span></div><h3>${d[3]}</h3><p>${d[4]}</p></div>`).join("");
+$$("#dec .rv").forEach(e => io.observe(e));
+
+/* keyboard: стрелки влево/вправо листают разделы */
+addEventListener("keydown", e => { if(e.target.matches("input")) return; if(e.key!=="ArrowRight" && e.key!=="ArrowLeft") return;
+  const cur = dotEls.findIndex(d => d.classList.contains("on")), n = Math.max(0, Math.min(secs.length-1, cur + (e.key==="ArrowRight"?1:-1)));
+  secs[n].scrollIntoView(); });
+</script>
+</body>
+</html>
