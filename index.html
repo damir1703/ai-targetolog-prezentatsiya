@@ -54,6 +54,12 @@ section{padding-block:clamp(72px,10vw,130px);position:relative}
 @keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,46,63,.7)}100%{box-shadow:0 0 0 14px rgba(255,46,63,0)}}
 .bar a.cta{font:600 13px/1 var(--f-b);color:var(--t1);text-decoration:none;padding:10px 16px;border:1px solid var(--line2);border-radius:999px;background:#0e0e12cc;backdrop-filter:blur(8px);transition:.2s}
 .bar a.cta:hover{border-color:var(--red);color:var(--red)}
+.bar-r{display:flex;align-items:center;gap:10px}
+.lang{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden;font:600 12px/1 var(--f-m);background:#0e0e12cc}
+.lang a{padding:10px 12px;color:var(--t2);text-decoration:none;transition:.2s}
+.lang a:hover{color:var(--t1)}
+.lang a.on{background:var(--t1);color:var(--bg)}
+@media (max-width:420px){.logo{font-size:11px}.bar a.cta{padding:10px 12px}}
 #prog{position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,var(--red),var(--red2));z-index:60;width:0}
 .dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:40;display:flex;flex-direction:column;gap:10px}
 .dots a{width:8px;height:8px;border-radius:50%;background:var(--line2);transition:.25s;position:relative}
@@ -324,7 +330,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 @media (max-width:620px){.dec{grid-template-columns:1fr}}
 
 /* control */
-.ctl{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:48px}
+.ctl{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:48px}
 .ctl>div{background:var(--bg2);padding:32px;min-width:0}
 .ctl h3{font-size:20px;margin-bottom:18px;display:flex;align-items:center;gap:12px}
 .ctl h3 i{width:12px;height:12px;border-radius:50%;background:var(--c)}
@@ -335,7 +341,8 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 .guard div{border:1px solid var(--line);border-radius:var(--r-s);padding:20px;min-width:0}
 .guard b{display:block;font:800 24px/1 var(--f-d);color:var(--red);margin-bottom:10px}
 .guard span{color:var(--t2);font-size:14px;line-height:1.4;display:block}
-@media (max-width:860px){.ctl{grid-template-columns:1fr}.guard{grid-template-columns:1fr 1fr}}
+.ctl .sub{color:var(--t3);font-size:14px;margin:-8px 0 18px}
+@media (max-width:980px){.ctl{grid-template-columns:1fr}.guard{grid-template-columns:1fr 1fr}}
 
 /* compare */
 .cmp{margin-top:44px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
@@ -376,7 +383,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <div id="prog"></div>
 <header class="bar">
   <a class="logo" href="#hero"><i></i>AI-ТАРГЕТОЛОГ</a>
-  <a class="cta" href="#price">Подключить</a>
+  <div class="bar-r"><div class="lang" aria-label="Language"><a class="on" href="./">RU</a><a href="uz.html">UZ</a></div><a class="cta" href="#price">Подключить</a></div>
 </header>
 <nav class="dots" id="dots" aria-label="Разделы"></nav>
 
@@ -435,7 +442,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div class="three">
       <div class="rv"><div class="k">Видит</div><h3>Всю воронку, а не кабинет</h3><p>Каждое объявление связано с заявкой, сделкой и оплатой. Агент судит рекламу по цене оплаты и доле мусора, а не по цене лида.</p><div class="chips"><span>Meta Ads API</span><span>AmoCRM</span><span>Bitrix24</span><span>Conversions API</span></div></div>
       <div class="rv" style="--d:.1s"><div class="k">Думает</div><h3>Математика + Claude</h3><p>Семь анализаторов считают цифры без AI. Затем модель Claude собирает из них план, опираясь на экономику вашего бизнеса и память о прошлых решениях.</p><div class="chips"><span>7 анализаторов</span><span>база знаний</span><span>память решений</span></div></div>
-      <div class="rv" style="--d:.2s"><div class="k">Действует</div><h3>Сам — рутину, с вами — деньги</h3><p>Заявки, сверки, алерты и отчёты идут автоматически. Паузы и бюджеты агент предлагает кнопкой — вы подтверждаете в один тап.</p><div class="chips"><span>Telegram-бот</span><span>Mini App</span><span>RU / UZ</span></div></div>
+      <div class="rv" style="--d:.2s"><div class="k">Действует</div><h3>Сам — в рамках, с вами — крупное</h3><p>Заявки, сверки, алерты и отчёты идут автоматически. Паузы и бюджеты агент меняет сам, когда это безопасно, а крупные решения приносит кнопкой — вы подтверждаете в один тап.</p><div class="chips"><span>Telegram-бот</span><span>Mini App</span><span>RU / UZ</span></div></div>
     </div>
   </div>
 </section>
@@ -490,7 +497,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <div class="wrap">
     <div class="eyebrow rv">Telegram Mini App</div>
     <h2 class="rv">Дашборд и чат с агентом — <em>внутри Telegram</em>, без логинов и паролей</h2>
-    <p class="lead rv">Открывается кнопкой рядом с полем ввода. Реклама, заявки и продажи на одном экране, цифры обновляются каждые 5 минут. В макете справа всё кликабельно: переключайте вкладки, тяните бюджет, спросите агента.</p>
+    <p class="lead rv">Открывается кнопкой рядом с полем ввода. Реклама, заявки и продажи на одном экране, цифры обновляются каждые 5 минут. В макете всё кликабельно: переключайте вкладки, тяните бюджет, спросите агента.</p>
     <div class="demo flip">
       <div class="rv">
         <div class="phone"><div class="scr ma" id="ma">
@@ -593,7 +600,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <section id="control" data-n="Контроль">
   <div class="wrap">
     <div class="eyebrow rv">Контроль</div>
-    <h2 class="rv">Стопы — сам. Траты — <em>только по вашей кнопке</em></h2>
+    <h2 class="rv">Сам — в пределах правил. За рамками — <em>только по вашей кнопке</em></h2>
     <p class="lead rv">Агент не может «сойти с ума» и слить бюджет: ограничения зашиты в код, а не в обещания.</p>
     <div class="ctl rv">
       <div style="--c:var(--ok)"><h3><i></i>Делает сам</h3><ul>
@@ -604,12 +611,17 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         <li>Раздаёт лиды менеджерам и напоминает о необработанных</li>
         <li>Останавливает объявление, которое тратит без заявок <span class="note">(если вы включили автостоп)</span></li>
       </ul></div>
+      <div style="--c:var(--warn)"><h3><i></i>Частично сам</h3><p class="sub">Когда убедился, что это безопасно</p><ul>
+        <li>Повышение и перераспределение бюджета — в пределах дневного шага и потолка, который задали вы</li>
+        <li>Пауза работающих объявлений и групп — когда цифры однозначны и в группе остаётся рабочее объявление</li>
+        <li>Запуск новых кампаний — из проверенных связок и с тестовым бюджетом</li>
+        <li>Всё, что выходит за эти рамки, приносит вам на подтверждение</li>
+      </ul></div>
       <div style="--c:var(--red)"><h3><i></i>Только с вашим «да»</h3><ul>
-        <li>Повышение и перераспределение бюджета</li>
-        <li>Пауза работающих объявлений и групп</li>
-        <li>Запуск новых кампаний — создаются выключенными, включаете вы</li>
+        <li>Изменения сверх лимитов: крупный подъём бюджета, новая стратегия</li>
         <li>Любая массовая запись в CRM — сначала показывает, что изменится</li>
         <li>SMS-рассылки клиентам</li>
+        <li>Спорные решения, где цифр недостаточно</li>
       </ul></div>
     </div>
     <div class="guard">
@@ -717,6 +729,7 @@ function onScroll(){
   dotEls.forEach((d,i) => d.classList.toggle("on", i===cur));
 }
 addEventListener("scroll", onScroll, {passive:true}); onScroll();
+$$(".lang a").forEach(a => a.addEventListener("click", () => { const i = dotEls.findIndex(d => d.classList.contains("on")); if(i>0) a.href = a.getAttribute("href").split("#")[0] + "#" + secs[i].id; }));
 
 /* ---- counters ---- */
 $$(".cnt").forEach(el => seen(el, () => {
@@ -843,7 +856,7 @@ const NODES = [
   l:["«За 14 дней 3 похожих предложения принято, 1 пропущено»","Не повторяет совет, который вы отклонили без причины","Видит, сработал ли прошлый подъём бюджета","История остаётся у вас при любой смене команды"]},
  {i:"05", t:"План", h:"Claude собирает решение", p:"Модель Claude получает выводы анализаторов, базу знаний и память — и возвращает структурированный план, а не простыню текста.",
   l:["Прогноз месяца: отстаём, в графике, опережаем","Действия с приоритетом P0 / P1 / P2","У каждого: почему, ожидаемый эффект, сценарий «что если»","Не больше трёх срочных действий за раз","Отдельно — наблюдения и задачи на неделю"]},
- {i:"06", t:"Вы", h:"Последнее слово — за человеком", p:"План приходит в Telegram. Под каждым действием три кнопки. Всё, что тратит деньги, выполняется только после подтверждения.",
+ {i:"06", t:"Вы", h:"Последнее слово — за человеком", p:"План приходит в Telegram. Под каждым действием три кнопки. Крупные и спорные решения выполняются только после подтверждения.",
   l:["Принять · Пропустить · Отложить на 24 часа","Ссылка сразу на нужное объявление в Ads Manager","Агент откажется от плохой команды и объяснит цифрами","Решение уходит в память — круг замыкается"]}
 ];
 const pipe = $("#pipe"), pipeD = $("#pipeD"); let pipeI = 0, pipeT;

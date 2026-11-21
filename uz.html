@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI-targetolog</title>
+<meta name="description" content="Meta'da reklamani yuritadigan, har bir arizani CRM bilan solishtiradigan va natijani to'lovgacha hisoblaydigan AI-agent. Boshqaruv — Telegram orqali.">
+<meta name="theme-color" content="#09090B">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: vertical scroll presentation */
+:root{
+  --bg:#09090B; --bg2:#0E0E12; --card:#141418; --card2:#1A1A20; --line:#25252D; --line2:#34343F;
+  --t1:#F5F2F0; --t2:#ABA7AA; --t3:#6F6B72;
+  --red:#FF2E3F; --red2:#FF6B4A; --red-deep:#7A0D19; --red-soft:rgba(255,46,63,.12);
+  --ok:#3DDC84; --warn:#FFB020; --info:#6AB3F3;
+  --f-d:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-b:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-m:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:22px; --r-s:14px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--t1);font:400 17px/1.55 var(--f-b);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{font-family:var(--f-d);margin:0;text-wrap:balance;letter-spacing:-.02em}
+h1{font-size:clamp(34px,6.2vw,76px);line-height:1.02;font-weight:800}
+h2{font-size:clamp(26px,3.9vw,46px);line-height:1.08;font-weight:700}
+h3{font-size:17px;line-height:1.25;font-weight:700;letter-spacing:-.01em}
+p{margin:0}
+em{font-style:normal;color:var(--red)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+section{padding-block:clamp(72px,10vw,130px);position:relative}
+.eyebrow{font:600 12px/1 var(--f-m);letter-spacing:.14em;text-transform:uppercase;color:var(--red);display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.eyebrow::before{content:"";width:28px;height:2px;background:var(--red)}
+.lead{color:var(--t2);font-size:clamp(17px,1.6vw,20px);max-width:62ch;margin-top:18px}
+.mono{font-family:var(--f-m);font-variant-numeric:tabular-nums}
+.note{color:var(--t3);font-size:13px;line-height:1.5}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}*{animation-duration:.01s!important;scroll-behavior:auto!important}}
+
+/* top bar */
+.bar{position:fixed;inset:0 0 auto;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px max(20px,env(safe-area-inset-right,0px)) 14px max(20px,env(safe-area-inset-left,0px));background:rgba(9,9,11,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.05)}
+.bar>*{pointer-events:auto}
+.logo{font:800 14px/1 var(--f-d);display:flex;align-items:center;gap:10px;color:var(--t1);text-decoration:none}
+.logo i{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 var(--red);animation:ping 2s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,46,63,.7)}100%{box-shadow:0 0 0 14px rgba(255,46,63,0)}}
+.bar a.cta{font:600 13px/1 var(--f-b);color:var(--t1);text-decoration:none;padding:10px 16px;border:1px solid var(--line2);border-radius:999px;background:#0e0e12cc;backdrop-filter:blur(8px);transition:.2s}
+.bar a.cta:hover{border-color:var(--red);color:var(--red)}
+.bar-r{display:flex;align-items:center;gap:10px}
+.lang{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden;font:600 12px/1 var(--f-m);background:#0e0e12cc}
+.lang a{padding:10px 12px;color:var(--t2);text-decoration:none;transition:.2s}
+.lang a:hover{color:var(--t1)}
+.lang a.on{background:var(--t1);color:var(--bg)}
+@media (max-width:420px){.logo{font-size:11px}.bar a.cta{padding:10px 12px}}
+#prog{position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,var(--red),var(--red2));z-index:60;width:0}
+.dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:40;display:flex;flex-direction:column;gap:10px}
+.dots a{width:8px;height:8px;border-radius:50%;background:var(--line2);transition:.25s;position:relative}
+.dots a.on{background:var(--red);transform:scale(1.5)}
+.dots a span{position:absolute;right:18px;top:50%;transform:translateY(-50%);white-space:nowrap;font:600 11px/1 var(--f-m);color:var(--t2);background:var(--card);border:1px solid var(--line);padding:6px 9px;border-radius:8px;opacity:0;pointer-events:none;transition:.2s}
+.dots a:hover span{opacity:1}
+@media (max-width:900px){.dots{display:none}}
+
+/* hero */
+#hero{padding-top:clamp(110px,14vw,170px);padding-bottom:60px;overflow:hidden}
+#net{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero::after{content:"";position:absolute;inset:auto 0 0;height:180px;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+.hero-g{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;position:relative;z-index:2}
+.hero-g>*{min-width:0}
+.pill{display:inline-flex;align-items:center;gap:9px;font:600 12px/1 var(--f-m);letter-spacing:.06em;color:var(--t2);border:1px solid var(--line2);border-radius:999px;padding:9px 14px;margin-bottom:26px;background:#0e0e1299}
+.pill b{color:var(--ok);font-weight:600}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
+.btn{display:inline-flex;align-items:center;gap:10px;font:700 15px/1 var(--f-b);padding:17px 24px;border-radius:14px;text-decoration:none;transition:transform .2s,box-shadow .2s,background .2s}
+.btn.p{background:var(--red);color:#fff;box-shadow:0 10px 40px -10px rgba(255,46,63,.7)}
+.btn.p:hover{transform:translateY(-2px);box-shadow:0 16px 50px -10px rgba(255,46,63,.9)}
+.btn.s{border:1px solid var(--line2);color:var(--t1)}
+.btn.s:hover{border-color:var(--t2)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:clamp(48px,7vw,84px);position:relative;z-index:2}
+.stats>div{background:var(--bg2);padding:26px 22px}
+.stats b{display:block;font:800 clamp(24px,3.2vw,40px)/1 var(--f-d);letter-spacing:-.03em}
+.stats span{display:block;color:var(--t2);font-size:14px;margin-top:10px;line-height:1.4}
+@media (max-width:900px){.hero-g{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+
+/* phone */
+.phone{width:min(330px,100%);aspect-ratio:330/672;margin-inline:auto;border-radius:44px;padding:10px;background:linear-gradient(145deg,#2c2c35,#111116);box-shadow:0 0 0 1px #3a3a45,0 40px 90px -30px rgba(255,46,63,.35),0 30px 60px -20px #000;position:relative}
+.phone::before{content:"";position:absolute;top:18px;left:50%;transform:translateX(-50%);width:84px;height:22px;border-radius:14px;background:#000;z-index:5}
+.scr{width:100%;height:100%;border-radius:35px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.float{animation:float 7s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-10px)}}
+
+/* telegram */
+.tg{background:#0E1621;font:400 13.5px/1.42 var(--f-b);color:#fff}
+.tg-h{padding:46px 14px 10px;background:#17212B;display:flex;align-items:center;gap:10px;border-bottom:1px solid #0b121b;flex:none}
+.tg-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red-deep));display:grid;place-items:center;font:800 12px/1 var(--f-d);flex:none}
+.tg-h b{display:block;font-size:14.5px;font-weight:600}
+.tg-h small{color:#6AB3F3;font-size:12px}
+.tg-b{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:7px;scrollbar-width:none;background:radial-gradient(circle at 20% 10%,#14202e,#0E1621 60%)}
+.tg-b::-webkit-scrollbar{display:none}
+.msg{max-width:90%;padding:8px 11px 9px;border-radius:14px;white-space:pre-wrap;word-break:break-word;animation:pop .35s cubic-bezier(.2,.9,.3,1.2) both;transform-origin:left bottom}
+@keyframes pop{from{opacity:0;transform:scale(.9) translateY(8px)}}
+.msg.bot{background:#182533;align-self:flex-start;border-bottom-left-radius:5px}
+.msg.me{background:#2B5278;align-self:flex-end;border-bottom-right-radius:5px;transform-origin:right bottom}
+.msg i{font-style:italic;color:#c9d6e2}
+.msg code{font:400 12.5px var(--f-m);color:#8fd0ff}
+.msg .done{display:block;margin-top:6px;color:#8fe3b0;font-style:italic}
+.day{align-self:center;font-size:11.5px;color:#9db0c2;background:#1e2c3a;padding:3px 10px;border-radius:99px}
+.kb{align-self:flex-start;width:90%;display:flex;flex-direction:column;gap:4px;margin-top:-3px;animation:pop .35s both}
+.kb div{display:flex;gap:4px}
+.kb button{flex:1;background:#243447;border-radius:8px;padding:9px 6px;font-size:12.5px;color:#fff;transition:.15s}
+.kb button:hover{background:#2f455e}
+.kb button.hot{box-shadow:0 0 0 2px var(--red);animation:hot 1.4s infinite}
+@keyframes hot{50%{box-shadow:0 0 0 2px rgba(255,46,63,.25)}}
+.typing{align-self:flex-start;background:#182533;border-radius:14px;padding:11px 14px;display:flex;gap:4px}
+.typing i{width:6px;height:6px;border-radius:50%;background:#6f8499;animation:ty 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes ty{30%{transform:translateY(-4px);background:#fff}}
+.tg-f{flex:none;background:#17212B;padding:9px 10px 14px;display:flex;align-items:center;gap:8px}
+.tg-f span{background:#2B5278;border-radius:99px;padding:7px 11px;font-size:12px;font-weight:600;white-space:nowrap}
+.tg-f em{flex:1;background:#0E1621;border-radius:99px;padding:8px 12px;color:#6f8499;font-size:13px}
+
+/* problem */
+.leaks{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:48px}
+.leak{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:26px 22px;display:flex;flex-direction:column;gap:14px;min-width:0;transition:border-color .3s,transform .3s}
+.leak:hover{border-color:var(--red);transform:translateY(-4px)}
+.leak b{font:800 clamp(34px,4vw,52px)/1 var(--f-d);color:var(--red);letter-spacing:-.04em}
+.leak p{color:var(--t2);font-size:15px}
+.leak small{margin-top:auto;font:400 11px/1.4 var(--f-m);color:var(--t3)}
+@media (max-width:980px){.leaks{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.leaks{grid-template-columns:1fr}}
+
+/* what */
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:48px}
+.three>div{background:var(--bg2);padding:32px 28px;min-width:0}
+.three .k{font:600 12px/1 var(--f-m);color:var(--red);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+.three h3{font-size:21px;margin-bottom:12px}
+.three p{color:var(--t2);font-size:15.5px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px}
+.chips span{font:400 12px/1 var(--f-m);padding:7px 10px;border:1px solid var(--line2);border-radius:99px;color:var(--t2)}
+@media (max-width:860px){.three{grid-template-columns:1fr}}
+
+/* brain */
+#brain{background:linear-gradient(var(--bg),var(--bg2) 30%,var(--bg))}
+.pipe{margin-top:54px;display:grid;grid-template-columns:repeat(6,1fr);gap:10px;position:relative}
+.pipe::before{content:"";position:absolute;left:4%;right:4%;top:33px;height:2px;background:repeating-linear-gradient(90deg,var(--red) 0 10px,transparent 10px 20px);background-size:20px 2px;animation:flow 1s linear infinite;opacity:.6}
+@keyframes flow{to{background-position:20px 0}}
+.node{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:0 4px;min-width:0}
+.node u{width:66px;height:66px;border-radius:20px;background:var(--card);border:1px solid var(--line2);display:grid;place-items:center;font:800 18px/1 var(--f-d);text-decoration:none;color:var(--t2);transition:.3s;position:relative;z-index:1}
+.node b{font:600 13px/1.25 var(--f-b);color:var(--t2);transition:.3s}
+.node.on u{background:var(--red);border-color:var(--red);color:#fff;transform:scale(1.1);box-shadow:0 0 50px -4px rgba(255,46,63,.8)}
+.node.on b{color:var(--t1)}
+.pipe-d{margin-top:34px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:30px;display:grid;grid-template-columns:1fr 1fr;gap:30px;min-height:230px}
+.pipe-d>*{min-width:0}
+.pipe-d h3{font-size:22px;margin-bottom:12px}
+.pipe-d p{color:var(--t2)}
+.pipe-d ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;font-size:14.5px}
+.pipe-d li{display:flex;gap:10px;color:var(--t2);animation:pop .4s both}
+.pipe-d li::before{content:"→";color:var(--red);font-family:var(--f-m);flex:none}
+@media (max-width:860px){.pipe{grid-template-columns:repeat(3,1fr);row-gap:24px}.pipe::before{display:none}.pipe-d{grid-template-columns:1fr}}
+
+/* playground */
+.play{margin-top:26px;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.play>div{background:var(--bg2);padding:30px;min-width:0}
+.sl{display:grid;gap:22px}
+.sl label{display:flex;justify-content:space-between;align-items:baseline;font-size:14.5px;color:var(--t2);margin-bottom:10px}
+.sl output{font:600 17px/1 var(--f-m);color:var(--t1)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:9px;background:linear-gradient(90deg,var(--red) var(--p,50%),var(--line2) var(--p,50%));cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:5px solid var(--red);box-shadow:0 4px 14px rgba(255,46,63,.5)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:5px solid var(--red)}
+.verdict{display:flex;flex-direction:column;gap:14px;justify-content:center;transition:background .4s}
+.verdict .tag{align-self:flex-start;font:600 12px/1 var(--f-m);letter-spacing:.1em;padding:8px 12px;border-radius:8px;background:var(--c);color:#09090B}
+.verdict h3{font-size:clamp(20px,2.4vw,28px)}
+.verdict p{color:var(--t2);font-size:15.5px}
+.verdict .rule{font:400 12.5px/1.5 var(--f-m);color:var(--t3);border-top:1px dashed var(--line2);padding-top:14px}
+@media (max-width:860px){.play{grid-template-columns:1fr}}
+
+/* demo layout */
+.demo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,330px);gap:clamp(28px,5vw,70px);align-items:center;margin-top:50px}
+.demo>*{min-width:0}
+.demo.flip{grid-template-columns:minmax(0,330px) minmax(0,1fr)}
+.list{display:flex;flex-direction:column;gap:8px}
+.list button{text-align:left;padding:18px 20px;border-radius:var(--r-s);border:1px solid var(--line);background:var(--card);display:grid;grid-template-columns:auto 1fr;gap:4px 14px;transition:.25s}
+.list button:hover{border-color:var(--line2)}
+.list button span{grid-row:span 2;font:600 12px/1 var(--f-m);color:var(--t3);padding-top:4px;transition:.25s}
+.list button b{font-weight:600;font-size:16px}
+.list button small{color:var(--t3);font-size:13.5px;line-height:1.4;max-height:0;overflow:hidden;transition:max-height .4s,margin .4s}
+.list button.on{border-color:var(--red);background:linear-gradient(90deg,var(--red-soft),var(--card) 70%)}
+.list button.on span{color:var(--red)}
+.list button.on small{max-height:90px;color:var(--t2);margin-top:4px}
+.hint{display:flex;align-items:center;gap:8px;font:400 12px/1.4 var(--f-m);color:var(--t3);margin-top:16px}
+.hint i{width:14px;height:14px;border-radius:4px;box-shadow:0 0 0 2px var(--red);flex:none}
+@media (max-width:860px){.demo,.demo.flip{grid-template-columns:1fr}.demo.flip .phone{order:2}}
+
+/* mini app */
+.ma{--mb:#13121C;--ms:#1D1C29;--ms2:#252435;--mbd:#2C2B3D;--m1:#F3F2FA;--m2:#ABABC2;--m3:#74748C;--ma:#FF7A2E;background:linear-gradient(135deg,#1D1934,#151D33 42%,#181728 70%,#2A1926);color:var(--m1);font:500 13px/1.4 "Golos Text",sans-serif}
+.ma-top{flex:none;padding:46px 14px 8px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--m2)}
+.ma-top b{font:800 14px/1 var(--f-d);color:var(--m1)}
+.ma-top span{border:1px solid var(--mbd);border-radius:99px;padding:4px 9px;font-size:11px}
+.ma-b{flex:1;overflow-y:auto;padding:6px 12px 14px;scrollbar-width:none;display:none;flex-direction:column;gap:10px}
+.ma-b::-webkit-scrollbar{display:none}
+.ma-b.on{display:flex;animation:fade .35s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+.tile{background:var(--ms);border:1px solid var(--mbd);border-radius:18px;padding:14px}
+.tile h4{margin:0 0 3px;font:700 13.5px/1.2 "Golos Text",sans-serif}
+.tile small{color:var(--m3);font-size:11.5px}
+.st{display:flex;align-items:center;gap:7px;color:var(--m2);font-size:12px}
+.st i{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+.hello{font:700 21px/1.15 "Golos Text",sans-serif;margin:6px 0 2px}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.kpi div{background:var(--ms);border:1px solid var(--mbd);border-radius:14px;padding:10px}
+.kpi b{display:block;font:700 19px/1 var(--f-m)}
+.kpi small{color:var(--m3);font-size:10.5px}
+.kpi em{font:600 10.5px var(--f-m);color:#22C55E}
+.ember{background:linear-gradient(135deg,#FF8A3D,#F26B1D 55%,#E2550B);border:0;color:#fff}
+.ember small{color:#ffe1cf}
+.ember .big{font:700 34px/1 var(--f-m);margin:8px 0 4px}
+.ember button{margin-top:10px;background:rgba(255,255,255,.2);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:600;color:#fff}
+.sim output{font:700 15px var(--f-m);color:var(--ma)}
+.sim input{--red:#FF7A2E;margin:12px 0 4px;background:linear-gradient(90deg,#FF7A2E var(--p,50%),var(--mbd) var(--p,50%))}
+.sim input::-webkit-slider-thumb{border-color:#FF7A2E;box-shadow:none;width:20px;height:20px}
+.sim .o{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.sim .o div{background:var(--ms2);border-radius:11px;padding:8px 10px}
+.sim .o b{display:block;font:700 16px var(--f-m)}
+.fn{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.fn div{display:grid;grid-template-columns:62px 1fr 34px;gap:8px;align-items:center;font-size:11.5px;color:var(--m2)}
+.fn i{height:8px;border-radius:9px;background:var(--ma);width:var(--w);transition:width 1s}
+.fn .bad i{background:#EF4444}
+.leakbox{margin-top:10px;background:#3D2819;border-radius:11px;padding:9px 11px;font-size:11.5px;color:#FFB48A}
+.notes{display:flex;flex-direction:column;gap:7px;margin-top:9px}
+.notes div{font-size:12px;color:var(--m2)}
+.notes b{font:600 10px/1 var(--f-m);padding:3px 6px;border-radius:5px;margin-right:6px;background:#2C2650;color:#B7A8FF}
+.notes b.s{background:#3B1F2D;color:#FF8FB1}.notes b.n{background:#1B3A2E;color:#6EE7A8}
+.crs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cr{background:var(--ms);border:1px solid var(--mbd);border-radius:16px;overflow:hidden}
+.cr .th{aspect-ratio:4/5;position:relative;display:grid;place-items:center;background:var(--g)}
+.cr .th::after{content:"▶";width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center;font-size:11px;padding-left:2px}
+.cr .th span{position:absolute;left:6px;top:6px;font-size:10px;background:rgba(0,0,0,.55);padding:3px 7px;border-radius:99px}
+.cr .th em{position:absolute;left:6px;bottom:6px;font-size:10px;background:#fff;color:#111;padding:3px 7px;border-radius:99px;font-weight:700}
+.cr .in{padding:8px 9px;font-size:11px;color:var(--m2)}
+.cr .in b{display:block;color:var(--m1);font-size:12px;margin-bottom:3px}
+.adv{display:grid;gap:7px}
+.adv div{border-radius:14px;padding:11px 12px;font-size:12px}
+.adv b{display:block;font-size:12.5px;margin-bottom:2px}
+.adv .a1{background:#1B3A2E;color:#9BE8BF}.adv .a2{background:#3B1F2D;color:#FFB0C6}.adv .a3{background:#1E2C4C;color:#A9C4FF}
+.orb{width:74px;height:74px;border-radius:50%;margin:10px auto 8px;background:conic-gradient(from 0deg,#FF7A2E,#FF2E3F,#7A2BFF,#FF7A2E);filter:blur(.3px);animation:spin 6s linear infinite;box-shadow:0 0 40px -6px #FF7A2E;position:relative;flex:none}
+.orb::after{content:"";position:absolute;inset:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3,transparent 55%),#1D1C29}
+@keyframes spin{to{transform:rotate(360deg)}}
+.c-intro{text-align:center;font-size:12.5px;color:var(--m2)}
+.c-intro b{display:block;color:var(--m1);font-size:14.5px;margin-bottom:5px}
+.c-chips{display:flex;flex-direction:column;gap:6px}
+.c-chips button{background:var(--ms);border:1px solid var(--mbd);border-radius:12px;padding:10px 12px;text-align:left;font-size:12.5px;color:var(--m1);transition:.2s}
+.c-chips button:hover{border-color:var(--ma)}
+.cm{max-width:92%;border-radius:18px;padding:9px 12px;font-size:12.5px;animation:pop .3s both;white-space:pre-wrap}
+.cm.u{align-self:flex-end;background:#35344a;border-bottom-right-radius:6px}
+.cm.a{align-self:flex-start;background:var(--ms);border:1px solid var(--mbd);border-bottom-left-radius:6px}
+.act{align-self:flex-start;background:linear-gradient(135deg,#FF8A3D,#E2550B);color:#fff;border-radius:12px;padding:10px 13px;font-size:12.5px;font-weight:700;animation:pop .3s both}
+.act.ok{background:#1B3A2E;color:#6EE7A8}
+.ma-tabs{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:8px 10px 14px;background:#151420;border-top:1px solid var(--mbd)}
+.ma-tabs button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:14px;font:800 10.5px/1 "Golos Text",sans-serif;color:var(--m3);transition:.25s}
+.ma-tabs svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ma-tabs button.on{background:linear-gradient(135deg,#FF7A2E,#E2550B);color:#fff}
+.sheet{position:absolute;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:22px;z-index:9;animation:fade .2s}
+.sheet div{background:#252435;border-radius:16px;padding:18px;font-size:13px;text-align:center;color:var(--m1)}
+.sheet p{margin-bottom:14px}
+.sheet button{padding:9px 18px;border-radius:10px;font-weight:700;font-size:13px;background:#35344a;color:#fff;margin:0 3px}
+.sheet button.y{background:#FF7A2E}
+
+/* day */
+.dayb{margin-top:48px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:clamp(20px,3vw,34px)}
+.clock{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.clock b{font:800 clamp(44px,7vw,84px)/1 var(--f-d);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.clock span{color:var(--t2)}
+.hours{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin:22px 0 10px}
+.hours i{height:34px;border-radius:5px;background:var(--line);transition:.25s;cursor:pointer}
+.hours i.w{background:#3a2226}
+.hours i.e{background:var(--red-deep)}
+.hours i.on{background:var(--red);transform:scaleY(1.25);box-shadow:0 0 18px rgba(255,46,63,.7)}
+.ev{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:26px}
+.ev>*{min-width:0}
+.ev h3{font:600 12px/1 var(--f-m);letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:14px}
+.ev ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.ev li{display:flex;gap:12px;font-size:15px;color:var(--t2);align-items:baseline}
+.ev li b{font:600 12px/1 var(--f-m);color:var(--red);flex:none;min-width:74px}
+#evNow li{color:var(--t1);animation:pop .35s both}
+@media (max-width:760px){.ev{grid-template-columns:1fr}.hours i{height:26px}}
+
+/* results */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:40px}
+.tabs button{padding:11px 18px;border-radius:99px;border:1px solid var(--line2);font-weight:600;font-size:14.5px;color:var(--t2);transition:.2s}
+.tabs button.on{background:var(--t1);color:var(--bg);border-color:var(--t1)}
+.case{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:clamp(22px,3vw,38px)}
+.case-h{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-end;margin-bottom:26px}
+.case-h h3{font-size:clamp(20px,2.6vw,30px);max-width:22ch}
+.case-h p{color:var(--t3);font:400 13px/1.4 var(--f-m)}
+.seg{display:inline-flex;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:2px;flex-wrap:wrap}
+.seg button{padding:8px 13px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--t2)}
+.seg button.on{background:var(--red);color:#fff}
+.chart{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(6px,1.6vw,18px);height:290px;align-items:end;margin-top:26px;border-bottom:1px solid var(--line2);padding-bottom:0}
+.col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:8px;min-width:0}
+.col b{font:600 clamp(11px,1.3vw,15px)/1 var(--f-m);white-space:nowrap}
+.col i{width:100%;max-width:92px;border-radius:10px 10px 0 0;background:linear-gradient(var(--red),var(--red-deep));height:0;transition:height 1s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d)}
+.col.dim i{background:linear-gradient(#4a4a55,#2a2a32)}
+.xl{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(6px,1.6vw,18px);margin-top:10px;text-align:center;font-size:13px;color:var(--t2)}
+.xl small{display:block;font:400 11px var(--f-m);color:var(--t3);margin-top:3px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+.fact{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-s);padding:20px;min-width:0}
+.fact b{display:block;font:800 clamp(22px,2.6vw,32px)/1.05 var(--f-d);letter-spacing:-.03em;margin-bottom:10px}
+.fact b small{font:600 14px var(--f-m);color:var(--t3);letter-spacing:0}
+.fact p{color:var(--t2);font-size:14.5px}
+@media (max-width:760px){.facts{grid-template-columns:1fr}.chart{height:220px}}
+
+/* decisions */
+.dec{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:44px}
+.d{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px;display:flex;flex-direction:column;gap:12px;min-width:0;transition:.3s}
+.d:hover{border-color:var(--line2);transform:translateY(-3px)}
+.d .top{display:flex;justify-content:space-between;align-items:center;font:600 12px/1 var(--f-m);color:var(--t3)}
+.d .k{padding:6px 9px;border-radius:7px;background:var(--red-soft);color:var(--red)}
+.d .k.g{background:rgba(61,220,132,.12);color:var(--ok)}.d .k.y{background:rgba(255,176,32,.12);color:var(--warn)}
+.d p{color:var(--t2);font-size:14.5px}
+.d p b{color:var(--t1);font-weight:600}
+@media (max-width:980px){.dec{grid-template-columns:1fr 1fr}}
+@media (max-width:620px){.dec{grid-template-columns:1fr}}
+
+/* control */
+.ctl{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:48px}
+.ctl>div{background:var(--bg2);padding:32px;min-width:0}
+.ctl h3{font-size:20px;margin-bottom:18px;display:flex;align-items:center;gap:12px}
+.ctl h3 i{width:12px;height:12px;border-radius:50%;background:var(--c)}
+.ctl ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:13px}
+.ctl li{color:var(--t2);padding-left:22px;position:relative;font-size:15.5px}
+.ctl li::before{content:"";position:absolute;left:0;top:10px;width:9px;height:2px;background:var(--c)}
+.guard{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px}
+.guard div{border:1px solid var(--line);border-radius:var(--r-s);padding:20px;min-width:0}
+.guard b{display:block;font:800 24px/1 var(--f-d);color:var(--red);margin-bottom:10px}
+.guard span{color:var(--t2);font-size:14px;line-height:1.4;display:block}
+.ctl .sub{color:var(--t3);font-size:14px;margin:-8px 0 18px}
+@media (max-width:980px){.ctl{grid-template-columns:1fr}.guard{grid-template-columns:1fr 1fr}}
+
+/* compare */
+.cmp{margin-top:44px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cmp>div{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:1px;background:var(--line)}
+.cmp>div>*{background:var(--bg2);padding:18px 22px;min-width:0;font-size:15px}
+.cmp>div>:first-child{color:var(--t2)}
+.cmp>div>:last-child{background:linear-gradient(90deg,rgba(255,46,63,.09),var(--bg2));color:var(--t1);font-weight:500}
+.cmp .hd>*{font:600 12px/1.3 var(--f-m);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.cmp .hd>:last-child{color:var(--red)}
+@media (max-width:720px){.cmp>div{grid-template-columns:1fr 1fr}.cmp>div>:first-child{grid-column:1/-1;padding-bottom:6px;font-weight:600;color:var(--t1)}.cmp .hd>:first-child{display:none}}
+
+/* price */
+.price{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;margin-top:48px}
+.price>*{min-width:0}
+.pc{border-radius:var(--r);padding:clamp(26px,3.4vw,44px);border:1px solid var(--line);background:var(--card)}
+.pc.main{background:radial-gradient(120% 90% at 0% 0%,rgba(255,46,63,.28),transparent 60%),var(--card);border-color:#5a1c24;position:relative;overflow:hidden}
+.pc .big{font:800 clamp(26px,3.6vw,42px)/1.08 var(--f-d);letter-spacing:-.03em;margin:14px 0 16px}
+.pc p{color:var(--t2)}
+.pc ul{margin:24px 0 0;padding:0;list-style:none;display:grid;gap:12px}
+.pc li{display:flex;gap:12px;font-size:15.5px}
+.pc li::before{content:"✓";color:var(--red);font-weight:700;flex:none}
+.steps{counter-reset:s;display:grid;gap:0;margin-top:20px}
+.steps div{counter-increment:s;display:grid;grid-template-columns:auto 1fr;gap:4px 16px;padding:18px 0;border-top:1px solid var(--line)}
+.steps div::before{content:counter(s,decimal-leading-zero);grid-row:span 2;font:600 13px/1.6 var(--f-m);color:var(--red)}
+.steps b{font-weight:600}
+.steps span{color:var(--t2);font-size:14.5px}
+@media (max-width:860px){.price{grid-template-columns:1fr}}
+
+#end{text-align:center;padding-bottom:90px}
+#end h2{font-size:clamp(30px,5.4vw,66px);font-weight:800;max-width:16ch;margin-inline:auto}
+#end .lead{margin-inline:auto}
+#end .btns{justify-content:center}
+footer{border-top:1px solid var(--line);padding:26px 0 calc(26px + env(safe-area-inset-bottom,0px));color:var(--t3);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<header class="bar">
+  <a class="logo" href="#hero"><i></i>AI-TARGETOLOG</a>
+  <div class="bar-r"><div class="lang" aria-label="Language"><a href="./">RU</a><a class="on" href="uz.html">UZ</a></div><a class="cta" href="#price">Ulash</a></div>
+</header>
+<nav class="dots" id="dots" aria-label="Bo'limlar"></nav>
+
+<!-- 1 HERO -->
+<section id="hero" data-n="Boshlanish">
+  <canvas id="net" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="hero-g">
+      <div>
+        <div class="pill rv"><i></i><b>ishlamoqda</b> · Meta Ads + CRM + Telegram</div>
+        <h1 class="rv" style="--d:.08s"><em>Uxlamaydigan</em> va to'lovgacha hisoblaydigan targetolog</h1>
+        <p class="lead rv" style="--d:.16s">AI-agent Facebook va Instagram'da reklamani yuritadi, har bir arizani CRM bilan solishtiradi va har tong reja olib keladi: nimani o'chirish, nimani kengaytirish va pul qayerda yo'qolayotgani. Uni Telegram orqali boshqarasiz.</p>
+        <div class="btns rv" style="--d:.24s">
+          <a class="btn p" href="#bot">Amalda ko'rish ↓</a>
+          <a class="btn s" href="#results">Mijozlar natijalari</a>
+        </div>
+      </div>
+      <div class="rv" style="--d:.3s">
+        <div class="phone float"><div class="scr tg">
+          <div class="tg-h"><div class="tg-av">AI</div><div><b>AI-targetolog</b><br><small>bot</small></div></div>
+          <div class="tg-b" id="heroChat"></div>
+          <div class="tg-f"><span>📊 Dashboard</span><em>Xabar</em></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="rv"><b class="cnt" data-to="2160">0</b><span>bitta loyihada 6 oyda sotuv — onlayn maktab, 2026-yil may–oktabr</span></div>
+      <div class="rv" style="--d:.08s"><b><span class="cnt" data-to="7.9" data-dec="1">0</span>×</b><span>shu 6 oyda reklama qaytimi: $56 ming xarajat → ≈$443 ming tushum</span></div>
+      <div class="rv" style="--d:.16s"><b class="cnt" data-to="14941">0</b><span>arizani agent Facebook'dan topib, CRM'ga qaytardi — ular sotuv bo'limiga yetib bormagan bo'lardi</span></div>
+      <div class="rv" style="--d:.24s"><b>24/7</b><span>yangi arizalar har 5 daqiqada, billing har 30 daqiqada tekshiriladi</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 PROBLEM -->
+<section id="problem" data-n="Muammo">
+  <div class="wrap">
+    <div class="eyebrow rv">Pul qayerda yo'qoladi</div>
+    <h2 class="rv">Reklama lid narxi bilan hisobot beradi. Biznes esa to'lovlar bilan yashaydi. Ular orasida — <em>bo'shliq</em></h2>
+    <p class="lead rv">Bu raqamlar agent ishlayotgan haqiqiy reklama kabinetlari auditidan olingan. Ulanishgacha buni hech kim ko'rmagan — targetolog ham, sotuv bo'limi ham.</p>
+    <div class="leaks">
+      <div class="leak rv"><b>7,7×</b><p>lid narxi deyarli bir xil bo'lgan e'lon guruhlari orasida to'lov narxidagi farq: $39 va $301.</p><small>92 kunlik audit · 27 487 lid</small></div>
+      <div class="leak rv" style="--d:.08s"><b>60%</b><p>lidga sotib bo'lmaydi: noto'g'ri raqamlar, boshqa auditoriya, «ariza qoldirmaganman». Chorakda $15 500.</p><small>shu audit</small></div>
+      <div class="leak rv" style="--d:.16s"><b>25–57%</b><p>lid-formalardagi arizalar integratsiya «ishlab turgan» paytda CRM'ga yetib bormagan. Ular uchun pul to'langan, lekin hech kim qo'ng'iroq qilmagan.</p><small>FB ↔ CRM solishtiruvi, 2026-yil may</small></div>
+      <div class="leak rv" style="--d:.24s"><b>8×</b><p>marta ko'proq sotib oladi — dastlabki 5 daqiqada qo'ng'iroq qilingan mijoz. Shu bilan birga lidlarning 27 foizi javob bermagan.</p><small>CRM ma'lumotlari, shu loyiha</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 WHAT -->
+<section id="what" data-n="Bu nima">
+  <div class="wrap">
+    <div class="eyebrow rv">AI-targetolog nima</div>
+    <h2 class="rv">Maslahat beradigan chat-bot emas. Kabinet va CRM'ga ulangan xodim</h2>
+    <p class="lead rv">Agentga Meta reklama kabineti, CRM va Telegram'ga kirish beriladi. Keyin u Head of Paid kabi ishlaydi: ko'rsatuvdan to'lovgacha butun zanjirni ko'radi, tartibni o'zi nazorat qiladi va sizga tayyor qaror bilan keladi.</p>
+    <div class="three">
+      <div class="rv"><div class="k">Ko'radi</div><h3>Faqat kabinetni emas, butun voronkani</h3><p>Har bir e'lon ariza, bitim va to'lov bilan bog'langan. Agent reklamani lid narxi bo'yicha emas, to'lov narxi va sifatsiz lidlar ulushi bo'yicha baholaydi.</p><div class="chips"><span>Meta Ads API</span><span>AmoCRM</span><span>Bitrix24</span><span>Conversions API</span></div></div>
+      <div class="rv" style="--d:.1s"><div class="k">O'ylaydi</div><h3>Matematika + Claude</h3><p>Yettita analizator raqamlarni AI'siz hisoblaydi. So'ng Claude modeli biznesingiz iqtisodi va avvalgi qarorlar xotirasiga tayanib, ulardan reja tuzadi.</p><div class="chips"><span>7 analizator</span><span>bilimlar bazasi</span><span>qarorlar xotirasi</span></div></div>
+      <div class="rv" style="--d:.2s"><div class="k">Harakat qiladi</div><h3>O'zi — doira ichida, yirigi — siz bilan</h3><p>Arizalar, solishtiruvlar, ogohlantirishlar va hisobotlar avtomatik ishlaydi. Pauza va byudjetlarni agent xavfsiz bo'lganda o'zi o'zgartiradi, yirik qarorlarni esa tugma bilan olib keladi — siz bir bosishda tasdiqlaysiz.</p><div class="chips"><span>Telegram-bot</span><span>Mini App</span><span>RU / UZ</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 BRAIN -->
+<section id="brain" data-n="Miya">
+  <div class="wrap">
+    <div class="eyebrow rv">Miya qanday ishlaydi</div>
+    <h2 class="rv">Xom raqamlardan qarorgacha — <em>olti qadam</em>, har birini tekshirish mumkin</h2>
+    <p class="lead rv">Qadamni bosing. Hech bir tavsiya o'ylab topilmaydi: har birining ortida dashbordda ko'rinadigan raqam turadi.</p>
+    <div class="pipe rv" id="pipe"></div>
+    <div class="pipe-d rv" id="pipeD"></div>
+
+    <h3 class="rv" style="margin-top:70px;font-size:clamp(20px,2.4vw,28px)">Mantiqni o'zingiz tekshiring</h3>
+    <p class="lead rv" style="margin-top:10px">Bular agent qoidalaridagi haqiqiy chegaralar. E'lon ko'rsatkichlarini suring — u nima taklif qilishini ko'rasiz.</p>
+    <div class="play rv">
+      <div class="sl">
+        <div><label for="pgGoal">Maqsadli lid narxi <output id="oGoal"></output></label><input id="pgGoal" type="range" min="0.5" max="5" step="0.1" value="1"></div>
+        <div><label for="pgCpl">Haqiqiy lid narxi <output id="oCpl"></output></label><input id="pgCpl" type="range" min="0.2" max="12" step="0.1" value="2.6"></div>
+        <div><label for="pgSpend">E'longa sarflangan <output id="oSpend"></output></label><input id="pgSpend" type="range" min="0" max="200" step="1" value="46"></div>
+        <div><label for="pgFreq">Ko'rsatuvlar chastotasi <output id="oFreq"></output></label><input id="pgFreq" type="range" min="1" max="6" step="0.1" value="1.8"></div>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 BOT -->
+<section id="bot" data-n="Telegram-bot">
+  <div class="wrap">
+    <div class="eyebrow rv">Telegram-bot</div>
+    <h2 class="rv">Butun reklama — bitta chatda. <em>Tugmalarni bosing</em>, ular ishlaydi</h2>
+    <p class="lead rv">Agentning haqiqiy xabarlari shunday ko'rinadi. Ssenariyni tanlang va suhbatni o'zingiz olib boring.</p>
+    <div class="demo">
+      <div class="rv">
+        <div class="list" id="scnList"></div>
+        <div class="hint"><i></i>telefondagi ajratilgan tugmalarni bosish mumkin</div>
+      </div>
+      <div class="rv" style="--d:.15s">
+        <div class="phone"><div class="scr tg">
+          <div class="tg-h"><div class="tg-av">AI</div><div><b>AI-targetolog</b><br><small>bot</small></div></div>
+          <div class="tg-b" id="chat"></div>
+          <div class="tg-f"><span>📊 Dashboard</span><em>Xabar</em></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 MINI APP -->
+<section id="app" data-n="Mini App">
+  <div class="wrap">
+    <div class="eyebrow rv">Telegram Mini App</div>
+    <h2 class="rv">Dashbord va agent bilan chat — <em>Telegram ichida</em>, login va parolsiz</h2>
+    <p class="lead rv">Yozish maydoni yonidagi tugma orqali ochiladi. Reklama, arizalar va sotuvlar bitta ekranda, raqamlar har 5 daqiqada yangilanadi. Maketda hammasi bosiladi: bo'limlarni almashtiring, byudjetni suring, agentdan so'rang.</p>
+    <div class="demo flip">
+      <div class="rv">
+        <div class="phone"><div class="scr ma" id="ma">
+          <div class="ma-top"><b>Dashboard</b><span>Namuna · demo ma'lumotlar</span></div>
+          <div class="ma-b on" data-t="rep">
+            <div class="st"><i></i>Reklama ishlayapti · Noyabr 2026</div>
+            <div class="hello">Xayrli tong, Aziz</div>
+            <div class="kpi">
+              <div><small>Oy arizalari</small><b>142</b><em>+18%</em></div>
+              <div><small>Uchrashuvlar</small><b>31</b><em>+9%</em></div>
+              <div><small>Shartnomalar</small><b>7</b><em>+2</em></div>
+            </div>
+            <div class="tile ember"><h4>Ariza narxi</h4><small>CPL · kunlik byudjet $10</small><div class="big">$1.84</div><small>maqsad ≤ $2.00</small><br><button data-go="chat">Chatda muhokama qilish</button></div>
+            <div class="tile sim"><h4>Byudjet simulyatori</h4><small>Kunlik byudjetni suring — oylik prognoz darhol qayta hisoblanadi</small>
+              <input id="simR" type="range" min="5" max="15" step="1" value="10" aria-label="Kunlik byudjet">
+              <div style="display:flex;justify-content:space-between"><output id="simO"></output><small>chegara $15</small></div>
+              <div class="o"><div><small>Ariza / oy</small><b id="s1"></b></div><div><small>Uchrashuv</small><b id="s2"></b></div><div><small>Shartnoma</small><b id="s3"></b></div><div><small>Shartnoma narxi</small><b id="s4"></b></div></div>
+            </div>
+            <div class="tile"><h4>Voronka: arizalar qayerda yo'qoladi</h4>
+              <div class="fn"><div>Ariza<i style="--w:100%"></i>142</div><div>Qo'ng'iroq<i style="--w:78%"></i>111</div><div class="bad">Uchrashuv<i style="--w:22%"></i>31</div><div>Taklif<i style="--w:13%"></i>18</div><div>Shartnoma<i style="--w:5%"></i>7</div></div>
+              <div class="leakbox"><b>Asosiy yo'qotish:</b> qo'ng'iroq → uchrashuv. Bu bosqichda oyiga ≈80 mijoz qolib ketadi.</div>
+            </div>
+            <div class="tile"><h4>Agent qaydlari</h4><div class="notes"><div><b class="s">Avtostop</b>«Kreativ 3»ni o'chirdi: $6.40, ariza yo'q</div><div><b class="n">Yangi kreativ</b>«Klinika keysi» roligi kutubxonada</div><div><b>Maslahat</b>12 ariza 15 daqiqadan ortiq qo'ng'iroq kutmoqda</div></div></div>
+          </div>
+          <div class="ma-b" data-t="cre">
+            <div class="st">Kreativlar bazasi · video ilovaning o'zida</div>
+            <div class="adv"><div class="a1"><b>🏆 Kengaytirish</b>«Klinika keysi»: eng arzon shartnoma — $41</div><div class="a2"><b>⚠️ Pul yeyapti</b>«Narx huki»: $6.40 sarflandi, ariza 0</div><div class="a3"><b>Test kutmoqda</b>2 kreativ yuklangan, lekin reklamada emas</div></div>
+            <div class="crs">
+              <div class="cr"><div class="th" style="--g:linear-gradient(160deg,#3b2a6b,#16122a)"><span>● faol</span><em>🏆 eng arzon</em></div><div class="in"><b>Klinika keysi</b>48 ariza · CPL $1.42<br>3 shartnoma · $41</div></div>
+              <div class="cr"><div class="th" style="--g:linear-gradient(160deg,#6b2a2a,#2a1212)"><span>● pauza</span><em>⚠️ pul yeyapti</em></div><div class="in"><b>«Narx» huki</b>0 ariza · $6.40<br>avtostop o'chirdi</div></div>
+              <div class="cr"><div class="th" style="--g:linear-gradient(160deg,#1f4a55,#0f1f26)"><span>● faol</span></div><div class="in"><b>Sotuv bo'limi tahlili</b>37 ariza · CPL $1.96<br>2 shartnoma · $72</div></div>
+              <div class="cr"><div class="th" style="--g:linear-gradient(160deg,#4a431f,#201c0e)"><span>● yangi</span></div><div class="in"><b>ROP bilan intervyu</b>hali reklamada emas<br><u style="color:#FF7A2E;text-decoration:none">Ishga tushirishni taklif qilish →</u></div></div>
+            </div>
+          </div>
+          <div class="ma-b" data-t="chat" id="maChat"></div>
+          <div class="ma-tabs">
+            <button class="on" data-tab="rep"><svg viewBox="0 0 24 24"><path d="M3 3v18h18M8 17V9m5 8V5m5 12v-6"/></svg>Hisobot</button>
+            <button data-tab="cre"><svg viewBox="0 0 24 24"><path d="M3 9h18v11H3zM3 9l2-5 4 1-1 4m4-4 4 1-1 4"/></svg>Kreativlar</button>
+            <button data-tab="chat"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-12 7l-5 1 1-4a8 8 0 1 1 16-4z"/></svg>Chat</button>
+          </div>
+        </div></div>
+      </div>
+      <div class="rv" style="--d:.15s">
+        <div class="list" id="maList">
+          <button class="on" data-tab="rep"><span>01</span><b>Hisobot: hammasi bitta ekranda</b><small>Arizalar, uchrashuvlar, shartnomalar, ariza narxi, asosiy yo'qotish ko'rsatilgan voronka va oyni darhol qayta hisoblaydigan byudjet simulyatori.</small></button>
+          <button data-tab="cre"><span>02</span><b>Kreativlar: shartnoma narxi bo'yicha</b><small>Agent roliklarni lid narxi bo'yicha emas, sotuv qanchaga tushishi bo'yicha saralaydi. Nimani kengaytirish, nima pul yeyayotgani va nima test kutayotgani ko'rinadi.</small></button>
+          <button data-tab="chat"><span>03</span><b>Chat: oddiy tilda so'rang</b><small>Agent jonli raqamlar asosida o'zbek yoki rus tilida javob beradi. Harakatni tugma orqali taklif qiladi — va xato qilishga yo'l qo'ymaydi.</small></button>
+        </div>
+        <p class="note" style="margin-top:18px">Maketda — demo ma'lumotlar. Ta'lim loyihalari uchun Mini App kengayadi: reja/fakt, kogortalar va qaytim, menejerlar reytingi, lidlar sifati.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 DAY -->
+<section id="day" data-n="Agent kuni">
+  <div class="wrap">
+    <div class="eyebrow rv">Agent hayotidan bir kun</div>
+    <h2 class="rv">Jamoa uxlayotganda, tushlikda yoki ta'tilda bo'lganda ham — u <em>smenada</em></h2>
+    <div class="dayb rv">
+      <div class="clock"><b id="clk">09:00</b><span id="clkS"></span></div>
+      <div class="hours" id="hours"></div>
+      <input id="hr" type="range" min="0" max="23" step="1" value="9" aria-label="Sutka soati">
+      <div class="ev">
+        <div><h3>Shu soatda</h3><ul id="evNow"></ul></div>
+        <div><h3>Kecha-yu kunduz, tanaffussiz</h3><ul>
+          <li><b>5 daq</b>Facebook'dagi yangi arizalar CRM'ga tushadi</li>
+          <li><b>30 daq</b>billing va kabinet holati tekshiriladi</li>
+          <li><b>1 soat</b>solishtiruv: pul to'langan barcha arizalar sotuvga yetib bordimi</li>
+          <li><b>1 soat</b>dashbord va AI-tahlil yangilanadi</li>
+          <li><b>2 daq</b>turli kanallardagi takroriy bitimlar birlashtiriladi</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 RESULTS -->
+<section id="results" data-n="Natijalar">
+  <div class="wrap">
+    <div class="eyebrow rv">Natijalar</div>
+    <h2 class="rv">To'rt loyiha, kabinet va CRM'dan olingan haqiqiy raqamlar</h2>
+    <div class="tabs rv" id="caseTabs"></div>
+    <div class="case rv" id="case"></div>
+    <p class="note rv" style="margin-top:14px" id="caseNote"></p>
+  </div>
+</section>
+
+<!-- 9 DECISIONS -->
+<section id="log" data-n="Qarorlar">
+  <div class="wrap">
+    <div class="eyebrow rv">Qarorlar jurnali</div>
+    <h2 class="rv">U qanday o'ylaydi: haqiqiy jurnaldan <em>oltita yozuv</em></h2>
+    <p class="lead rv">Har bir qaror sababi va raqamlari bilan yozilgan. Agent o'zining kechagi qadamini bekor qilgan holatlar ham shu yerda.</p>
+    <div class="dec" id="dec"></div>
+  </div>
+</section>
+
+<!-- 10 CONTROL -->
+<section id="control" data-n="Nazorat">
+  <div class="wrap">
+    <div class="eyebrow rv">Nazorat</div>
+    <h2 class="rv">O'zi — qoidalar doirasida. Undan tashqarisi — <em>faqat sizning tugmangiz bilan</em></h2>
+    <p class="lead rv">Agent «aqldan ozib» byudjetni sovura olmaydi: cheklovlar va'dada emas, kodning o'zida.</p>
+    <div class="ctl rv">
+      <div style="--c:var(--ok)"><h3><i></i>O'zi bajaradi</h3><ul>
+        <li>Arizalarni Facebook'dan CRM'ga o'tkazadi va yo'qolganlarini topadi</li>
+        <li>Billing, kabinet holati va pikselni kuzatadi</li>
+        <li>Hisobot, prognoz va anomaliyalar haqida ogohlantirish yuboradi</li>
+        <li>Bitim statuslarini Meta'ga qaytaradi — algoritm to'lovlardan o'rganadi</li>
+        <li>Lidlarni menejerlarga taqsimlaydi va ishlanmaganlarini eslatadi</li>
+        <li>Arizasiz pul sarflayotgan e'lonni to'xtatadi <span class="note">(avtostop yoqilgan bo'lsa)</span></li>
+      </ul></div>
+      <div style="--c:var(--warn)"><h3><i></i>Qisman o'zi</h3><p class="sub">Xavfsiz ekaniga ishonch hosil qilgach</p><ul>
+        <li>Byudjetni oshirish va qayta taqsimlash — kunlik qadam va siz belgilagan chegara doirasida</li>
+        <li>Ishlayotgan e'lon va guruhlarni pauza qilish — raqamlar aniq bo'lsa va guruhda ishlaydigan e'lon qolsa</li>
+        <li>Yangi kampaniyalarni ishga tushirish — sinalgan bog'lamlardan va test byudjeti bilan</li>
+        <li>Bu doiradan chiqadigan hamma narsani sizga tasdiqlash uchun olib keladi</li>
+      </ul></div>
+      <div style="--c:var(--red)"><h3><i></i>Faqat sizning «ha»ngiz bilan</h3><ul>
+        <li>Limitdan ortiq o'zgarishlar: byudjetni keskin oshirish, yangi strategiya</li>
+        <li>CRM'ga har qanday ommaviy yozuv — avval nima o'zgarishini ko'rsatadi</li>
+        <li>Mijozlarga SMS-xabarnomalar</li>
+        <li>Raqamlar yetarli bo'lmagan bahsli qarorlar</li>
+      </ul></div>
+    </div>
+    <div class="guard">
+      <div class="rv"><b>±20%</b><span>kuniga byudjetning maksimal o'zgarishi</span></div>
+      <div class="rv" style="--d:.08s"><b>3</b><span>tadan ortiq shoshilinch harakat bir vaqtda berilmaydi — vazifalarga ko'milib qolmaslik uchun</span></div>
+      <div class="rv" style="--d:.16s"><b>0</b><span>ta o'chirish: kampaniyalar faqat pauzaga qo'yiladi</span></div>
+      <div class="rv" style="--d:.24s"><b>100%</b><span>qarorlar sababi va natijasi bilan xotirada saqlanadi</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 COMPARE -->
+<section id="compare" data-n="Taqqoslash">
+  <div class="wrap">
+    <div class="eyebrow rv">Nima o'zgaradi</div>
+    <h2 class="rv">Odatiy reklama yuritish va AI-targetolog</h2>
+    <div class="cmp rv">
+      <div class="hd"><div></div><div>Odatda</div><div>AI-targetolog bilan</div></div>
+      <div><div>Reklama nimaga qarab baholanadi</div><div>Lid narxi va CTR</div><div>To'lov narxi va sifatsiz lidlar ulushi</div></div>
+      <div><div>Yo'qolgan arizalar</div><div>Tasodifan, haftalar o'tib bilishadi</div><div>Har soatda CRM bilan solishtiruv, avtomatik to'ldirish</div></div>
+      <div><div>Hisobot</div><div>Haftada bir, eslatilsa</div><div>Har tong 09:00 da va istalgan payt buyruq bilan</div></div>
+      <div><div>To'lov uzilishi yoki bloklanish</div><div>Reklama dushanbagacha to'xtab turadi</div><div>30 daqiqa ichida Telegram'ga ogohlantirish</div></div>
+      <div><div>Qaror nega qabul qilindi</div><div>«Shunday his qilyapman»</div><div>Sabab, raqamlar, kutilayotgan natija va «agar...» ssenariysi</div></div>
+      <div><div>Reklamami yoki sotuvmi?</div><div>Marketing va sotuv bo'limi bahsi</div><div>Yo'qotish qayerdaligi ko'rinadi: kabinetda, formada yoki qo'ng'iroqda</div></div>
+      <div><div>Ta'til, kasallik, pudratchi almashuvi</div><div>Bilim odam bilan birga ketadi</div><div>Barcha qarorlar tarixi sizda qoladi</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 PRICE -->
+<section id="price" data-n="Ulanish">
+  <div class="wrap">
+    <div class="eyebrow rv">To'lov modeli</div>
+    <h2 class="rv">Qat'iy belgilangan obuna. Byudjetdan <em>foizsiz</em></h2>
+    <div class="price">
+      <div class="pc main rv">
+        <div class="eyebrow" style="margin:0">Har oy</div>
+        <div class="big">Oyiga bitta summa — u reklamangiz bilan birga o'smaydi</div>
+        <p>Ko'proq sarflashingizdan agentga foyda yo'q. Uning vazifasi — har bir to'lov arzonroqqa tushishi. Narx integratsiyalar tarkibiga bog'liq va loyihangizga qarab kelishiladi.</p>
+        <ul>
+          <li>Meta reklama kabinetingizda AI-targetolog</li>
+          <li>Butun jamoa uchun Telegram-bot va Mini App</li>
+          <li>CRM'ingiz asosida to'lovgacha bo'lgan to'liq analitika</li>
+          <li>Yo'qolgan arizalarni solishtirish va qaytarish</li>
+          <li>Biznes iqtisodiga moslash: chek, maqsadlar, chegaralar</li>
+          <li>Kuzatib borish va takomillashtirish</li>
+        </ul>
+        <div class="btns"><a class="btn p" id="ctaBtn" href="#end">Ulanishni muhokama qilish</a></div>
+      </div>
+      <div class="pc rv" style="--d:.12s">
+        <h3 style="font-size:20px">Ulanish qanday o'tadi</h3>
+        <div class="steps">
+          <div><b>Kirish huquqlari</b><span>Meta reklama kabineti, CRM (AmoCRM yoki Bitrix24) va jamoaning Telegram-guruhi.</span></div>
+          <div><b>Iqtisod</b><span>O'rtacha chek, maqsadli to'lov narxi va agent reklamani baholaydigan chegaralarni belgilaymiz.</span></div>
+          <div><b>Audit</b><span>Agent kabinet va CRM tarixini o'rganadi: sifatsiz lidlar qayerda, yo'qotishlar qayerda, aslida nima sotyapti.</span></div>
+          <div><b>Ish</b><span>Tonggi hisobotlar, ogohlantirishlar, solishtiruvlar va harakatlar rejasi — birinchi kundan.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 END -->
+<section id="end" data-n="Aloqa">
+  <div class="wrap">
+    <h2 class="rv"><em>Sizning</em> kabinetingizda ko'rsatamiz</h2>
+    <p class="lead rv">Agentni ma'lumotlaringizga ulaymiz va tahlil qilamiz: to'lov aslida qanchaga tushyapti, nechta ariza sotuvga yetib bormayapti va ertadanoq nimani o'chirish mumkin.</p>
+    <div class="btns rv" id="endBtns"></div>
+  </div>
+</section>
+<footer><div class="wrap"><span>AI-targetolog · 2026</span><span>Raqamlar — mijozlarning reklama kabinetlari va CRM'idan. Tushum — bitim yopilgan sana bo'yicha.</span></div></footer>
+
+<script>
+/* contact link for buttons, e.g. https://t.me/username */
+const CONTACT_URL = "";
+const CONTACT_LABEL = "Telegram'ga yozish";
+
+const $ = (s, r=document) => r.querySelector(s), $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+const RM = matchMedia("(prefers-reduced-motion:reduce)").matches;
+function fill(inp){ inp.style.setProperty("--p", ((inp.value-inp.min)/(inp.max-inp.min)*100)+"%"); }
+function seen(el, fn, th=.3){ const o = new IntersectionObserver(e => { if(e[0].isIntersecting){ o.disconnect(); fn(); } }, {threshold:th}); o.observe(el); }
+
+/* ---- contact ---- */
+(() => {
+  const box = $("#endBtns");
+  if (CONTACT_URL) {
+    box.innerHTML = `<a class="btn p" href="${CONTACT_URL}" target="_blank" rel="noopener">${CONTACT_LABEL} →</a>`;
+  } else {
+    box.innerHTML = `<a class="btn s" href="#hero">↑ Yana bir bor ko'rish</a>`;
+  }
+})();
+
+/* ---- reveal, progress, dots ---- */
+const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }), {threshold:.12});
+$$(".rv").forEach(e => io.observe(e));
+const secs = $$("section[data-n]"), dots = $("#dots");
+dots.innerHTML = secs.map(s => `<a href="#${s.id}" aria-label="${s.dataset.n}"><span>${s.dataset.n}</span></a>`).join("");
+const dotEls = $$("a", dots);
+function onScroll(){
+  const h = document.documentElement;
+  $("#prog").style.width = (h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+"%";
+  let cur = 0; secs.forEach((s,i) => { if(s.getBoundingClientRect().top < innerHeight*.45) cur = i; });
+  dotEls.forEach((d,i) => d.classList.toggle("on", i===cur));
+}
+addEventListener("scroll", onScroll, {passive:true}); onScroll();
+$$(".lang a").forEach(a => a.addEventListener("click", () => { const i = dotEls.findIndex(d => d.classList.contains("on")); if(i>0) a.href = a.getAttribute("href").split("#")[0] + "#" + secs[i].id; }));
+
+/* ---- counters ---- */
+$$(".cnt").forEach(el => seen(el, () => {
+  const to = +el.dataset.to, dec = +(el.dataset.dec||0), t0 = performance.now(), dur = RM ? 1 : 1800;
+  (function tick(t){ const k = Math.min(1,(t-t0)/dur), v = to*(1-Math.pow(1-k,4));
+    el.textContent = dec ? v.toFixed(dec).replace(".",",") : fmt(v); if(k<1) requestAnimationFrame(tick); })(t0);
+}, .6));
+
+/* ---- hero network canvas ---- */
+(() => {
+  const c = $("#net"), x = c.getContext("2d"); let W,H,P=[];
+  function size(){ const r = c.getBoundingClientRect(), d = Math.min(devicePixelRatio||1,2); W=r.width; H=r.height; c.width=W*d; c.height=H*d; x.setTransform(d,0,0,d,0,0);
+    const n = Math.round(W*H/26000); P = Array.from({length:n}, () => ({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.6+.6})); }
+  function draw(){ x.clearRect(0,0,W,H);
+    for(const p of P){ p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>W) p.vx*=-1; if(p.y<0||p.y>H) p.vy*=-1; }
+    for(let i=0;i<P.length;i++) for(let j=i+1;j<P.length;j++){ const a=P[i],b=P[j],d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<130){ x.strokeStyle=`rgba(255,46,63,${(1-d/130)*.22})`; x.lineWidth=1; x.beginPath(); x.moveTo(a.x,a.y); x.lineTo(b.x,b.y); x.stroke(); } }
+    for(const p of P){ x.fillStyle="rgba(255,90,100,.7)"; x.beginPath(); x.arc(p.x,p.y,p.r,0,7); x.fill(); }
+    if(!RM) requestAnimationFrame(draw); }
+  size(); draw(); addEventListener("resize", size);
+})();
+
+/* ---- telegram engine ---- */
+function md(s){ return s.replace(/\*(.+?)\*/g,"<b>$1</b>").replace(/_(.+?)_/g,"<i>$1</i>").replace(/`(.+?)`/g,"<code>$1</code>"); }
+function Chat(box){
+  let token = 0;
+  const api = {
+    box,
+    add(html, cls="bot"){ const m = document.createElement("div"); m.className = "msg "+cls; m.innerHTML = md(html); box.append(m); api.down(); return m; },
+    day(t){ const d = document.createElement("div"); d.className="day"; d.textContent=t; box.append(d); },
+    kb(rows, onClick){ const k = document.createElement("div"); k.className="kb";
+      rows.forEach(r => { const d = document.createElement("div"); r.forEach(b => { const btn = document.createElement("button"); btn.textContent = b.t; if(b.a){ btn.classList.add("hot"); btn.onclick = () => onClick(b.a, k); } d.append(btn); }); k.append(d); });
+      box.append(k); api.down(); return k; },
+    async bot(html, wait=650){ const my = token; const t = document.createElement("div"); t.className="typing"; t.innerHTML="<i></i><i></i><i></i>"; box.append(t); api.down(); await sleep(RM?0:wait); t.remove(); if(my!==token) throw 0; return api.add(html); },
+    async me(html){ const my = token; await sleep(RM?0:350); if(my!==token) throw 0; return api.add(html,"me"); },
+    down(){ box.scrollTo({top:box.scrollHeight, behavior:RM?"auto":"smooth"}); },
+    async run(fn){ token++; box.innerHTML=""; try{ await fn(api); }catch(e){ if(e!==0) throw e; } }
+  };
+  return api;
+}
+
+const REPORT = `☀️ Xayrli tong, Aziz!
+_Kechagi kun bo'yicha hisobot_
+
+📊 *Onlayn maktab | 16.07.2026*
+💰 $252.38  🎯 286 lid  🟡 CPL $0.88
+
+🟢 Target 3 [welcome] — 3 lid, CPL $0.26
+🟡 target.2 ABO — 29 lid, CPL $0.73
+🟡 creative 55 — 46 lid, CPL $0.80
+🔴 target.8 ABO — 1 lid, CPL $5.04`;
+
+const ACTION = `*P0* · Pauza target.8 [welcome] ABO
+
+_CPL $5.04, benchmark $0.88, 1 lid $5 ga — byudjetni yeyapti_
+
+*Natija:* −$5/kun, o'rtacha CPL −3%
+
+*Ssenariy:* O'chirilsa → CPL ~$0.85. O'chirilmasa → haftada −$35.
+
+📊 14 kunda shunga o'xshash 3 taklif qabul qilingan, 1 tasi o'tkazib yuborilgan.`;
+
+const SCN = [
+ {t:"Tonggi hisobot", d:"Har kuni 09:00 da jamoaning barcha a'zolariga: xarajat, lidlar, lid narxi va kampaniyalar bo'yicha svetofor.",
+  run: async c => { c.day("bugun, 09:00"); await c.bot(REPORT, 900);
+    await sleep(700); await c.me("/forecast");
+    await c.bot(`*📊 Oy oxirigacha prognoz*\n\nLidlar: *8420* (reja: 9000)\nByudjet: *$7400* (reja: $7800)\nCPL: *$0.88*\n\nTo'plangan: 4600 lid · $4050\nTrend: +2.4 lid/kun\n14 kun qoldi`); }},
+ {t:"«Hozir nima qilish kerak»", d:"Agent kabinetni tahlil qiladi va sababi, natijasi hamda «agar...» ssenariysi bilan uchtagacha harakat taklif qiladi. Qaror eslab qolinadi.",
+  run: async c => { await c.me("/actions"); const w = await c.bot("🧠 Kabinetni tahlil qilyapman (30-60 soniya)…", 400); await sleep(RM?0:1300); w.remove();
+    await c.bot("*🎯 Hozir nima qilish kerak*\n_Portfel barqaror, CPL $0.88 me'yorda; ikkita adset o'rtacha CPL'ni yuqoriga tortyapti._", 300);
+    const m = await c.bot(ACTION, 700);
+    c.kb([[{t:"✅ Qabul qilish",a:"ok"},{t:"✗ O'tkazib yuborish",a:"skip"},{t:"💤 24 soatga",a:"snz"}],[{t:"🔗 Ads Manager'da ochish"}]], async (a,k) => {
+      k.remove(); m.insertAdjacentHTML("beforeend", `<span class="done">${{ok:"✓ Qabul qilindi",skip:"✗ O'tkazib yuborildi",snz:"💤 24 soatga qoldirildi"}[a]}</span>`);
+      await c.bot("Xotiraga yozdim. Keyingi tahlilda bu qarorni hisobga olaman va u nima berganini ko'rsataman.", 600); }); }},
+ {t:"Yo'qolgan arizalar", d:"Facebook lid-formalarini CRM bilan solishtirish. Pul to'langan, lekin menejerlarga yetib bormagan hamma narsa bitta tugma bilan — yoki har soatda avtomatik qaytariladi.",
+  run: async c => { await c.me("/missing");
+    await c.bot("*🔍 FB ↔ CRM solishtiruvi (bugun)*\n\n📱 FB Instant Form: `140`\n💾 CRM'da:          `136` (97%)\n❗ Yo'qolgan:        `4`", 900);
+    c.kb([[{t:"🔄 4 ta yo'qolganni yuklash",a:"load"}]], async (a,k) => { k.remove();
+      await c.bot("✅ *Yuklash tugadi*\n\n📤 Yuklandi: `4` lid\n\n📊 Hozir: `140` / `140` (100%)\n✅ Barcha lidlar CRM'da", 1100); }); }},
+ {t:"Ogohlantirish: reklama to'xtadi", d:"Agent kabinetni har 30 daqiqada tekshiradi. Bloklanish, to'lanmagan hisob yoki juda past xarajat — dushanba kuni emas, darhol bilasiz.",
+  run: async c => { c.day("shanba, 14:30");
+    await c.bot("⚠️ *Byudjet sarfi past!*\n\nVaqt: 14:30\nSarflandi: *$3.10*\nKutilgan: ~$45.31 (kunning 60% o'tdi)\nKunlik byudjet: $75/kun\n\nBilling yoki e'lonlar holatini tekshiring.", 800);
+    await sleep(900);
+    await c.bot("🚨 *KRITIK — Akkauntda muammo!*\n\nHolat: *DISABLED*\nReklama ko'rsatilmayapti!\n\n👉 Billingni tekshiring:\nbusiness.facebook.com/billing", 900); }},
+ {t:"Sotuv bo'limi hisoboti", d:"CRM voronkasi, lidlar sifati, rad etish sabablari va eng muhimi — sifatli lid narxi va sotuv narxi.",
+  run: async c => { await c.me("/sales"); await c.bot("*Davrni tanlang:*", 400);
+    c.kb([[{t:"📅 Kecha",a:"y"}],[{t:"📅 7 kun",a:"y"}],[{t:"📅 Shu oy",a:"y"}]], async (a,k) => { k.remove();
+      await c.bot("📊 *Sotuv hisoboti*\n📅 Kecha (15.07.2026)\n\n*Lidlar:* `286`\n\n📞 Qo'ng'iroq qilindi — `70` · 24.5%\n💬 Suhbat bo'ldi — `41` · 14.3%\n🏆 Muvaffaqiyatli sotildi — `9` · 3.1%\n\n*Sifat:*\n✅ Sifatli: `120` · 42.0%\n❌ Sifatsiz: `61` · 21.3%\n\n*Narx:*\n💰 Xarajat: `$252.38`\n💵 CPL:  `$0.88` (lid uchun)\n💎 CPQL: `$2.10` (sifatli lid uchun)\n🏆 CPA:  `$28.04` (sotuv uchun)", 1000); }); }},
+ {t:"Avtostop", d:"E'lon maqsaddan uch barobar ko'p sarflab, birorta ariza keltirmadi — agent uni o'zi o'chiradi va xabar beradi. Guruhdagi oxirgi ishlayotgan e'longa tegmaydi.",
+  run: async c => { c.day("bugun, 03:12");
+    await c.bot("⛔️ *Avtostop: e'lon o'chirildi*\n\n🎬 Kreativ 3 — «narx» huki\n📂 Sotuv bo'limi — 25-45\n💸 $6.40 · ariza 0\n📏 $6.40 sarflandi (≥ maqsaddan 3×, $2), ariza 0\n\nUnga endi pul sarflanmaydi. Qaytarish — Mini App chati orqali («qayta yoq …»).", 900); }},
+ {t:"Lidlarni menejerlarga taqsimlash", d:"Lid bo'sh menejerga beriladi, kuchlilariga — biroz ko'proq. 10 daqiqada olmasa — eslatma, so'ng navbatchiga o'tkaziladi. Har soatda rahbarga xulosa.",
+  run: async c => { c.day("bugun, 14:00");
+    await c.bot("🔀 *Taqsimlovchi · 13:00–14:00*\n\nBir soatda: yangi FB/IG 18, tizim 18 tasini taqsimladi\nIshlandi 15, o'rtacha vaqt 9 daq (mediana 6)\nEslatmalar 3 · navbatchiga 1\n\nKun boshidan: lid 131, ishlandi 117\nIshlangunga qadar: o'rtacha 12, mediana 7\n15 daqiqada: 78% · bir soatda: 95%", 900); }}
+];
+const chat = Chat($("#chat"));
+const scnList = $("#scnList");
+scnList.innerHTML = SCN.map((s,i) => `<button data-i="${i}"><span>${String(i+1).padStart(2,"0")}</span><b>${s.t}</b><small>${s.d}</small></button>`).join("");
+function playScn(i){ $$("button",scnList).forEach((b,j) => b.classList.toggle("on", i===j)); chat.run(SCN[i].run); }
+scnList.onclick = e => { const b = e.target.closest("button"); if(b) playScn(+b.dataset.i); };
+$$("button",scnList)[0].classList.add("on");
+seen($("#chat"), () => playScn(0));
+
+/* hero chat: loop */
+(() => { const hc = Chat($("#heroChat"));
+  const loop = async c => { c.day("bugun, 09:00"); await c.bot(REPORT, 1000); await sleep(1600);
+    const m = await c.bot("*P0* · Pauza target.8 ABO\n_CPL $5.04, benchmark $0.88 — byudjetni yeyapti_\n*Natija:* −$5/kun", 900);
+    const k = c.kb([[{t:"✅ Qabul qilish"},{t:"✗ O'tkazib yuborish"},{t:"💤 Keyinroq"}]]); await sleep(1900);
+    k.remove(); m.insertAdjacentHTML("beforeend",'<span class="done">✓ Qabul qilindi</span>'); await sleep(1500);
+    await c.bot("*🔍 FB ↔ CRM solishtiruvi*\n📱 Formalarda: `140` · 💾 CRM'da: `136`\n❗ 4 ariza yo'qolgan — CRM'ga qaytardim ✅", 900);
+    if(!RM){ await sleep(5200); hc.run(loop); } };
+  hc.run(loop);
+})();
+
+/* ---- brain pipeline ---- */
+const NODES = [
+ {i:"01", t:"Ma'lumotlar", h:"Kabinet va CRM bitta jadvalda", p:"Agent Meta Ads statistikasi va CRM bitimlarini olib, ularni bog'laydi: e'lon → ariza → bitim → to'lov.",
+  l:["Xarajat, ko'rsatuvlar, kliklar, lidlar — kampaniya, e'lon va soatlar bo'yicha","Bitim statuslari, rad etish sabablari, to'lovlar, menejerlar","E'lon ID va Facebook ariza ID bo'yicha bog'lanish","Qaysi rolik shunchaki ariza emas, pul keltirgani ko'rinadi"]},
+ {i:"02", t:"7 analizator", h:"Avval matematika hisoblaydi", p:"Raqamlar oddiy koddagi yettita mustaqil tekshiruvdan o'tadi. Bu bosqichda hech qanday «AI intuitsiyasi» yo'q — faqat chegaralar va statistika.",
+  l:["Anomaliyalar: arizasiz xarajat, CTR 30% dan ko'p tushishi","Kreativ charchashi: chastota ≥ 3, lid narxi 30% oshishi","Maqsadga nisbatan yetakchilar va autsayderlar","O'rganish bosqichi: 7 kunda 50 konversiya","Guruhlar orasida auditoriyalar kesishuvi","14 kunlik trend bo'yicha oy oxirigacha prognoz","Ishga tushirishdan oldin kreativni tekshirish: format, davomiylik"]},
+ {i:"03", t:"Bilimlar bazasi", h:"«Umuman reklama»ni emas, sizning biznesingizni biladi", p:"Agentda aynan sizning loyihangiz iqtisodi yozilgan hujjat bor. U marketingning har qanday umumiy qoidasidan muhimroq.",
+  l:["O'rtacha chek va maqsadli to'lov narxi","Chegaralar: qachon kengaytirish, qachon o'chirish","Sotuv rejasidan kelib chiqqan byudjet formulasi","Meta 2026 qoidalari: Conversions API, lid-formalar, hodisalar sifati","Performance-marketing bo'yicha 1 100+ qatorli baza"]},
+ {i:"04", t:"Xotira", h:"Nima maslahat bergani va undan nima chiqqanini eslaydi", p:"Har bir taklif yozib boriladi: nima tavsiya qildi, siz nima qildingiz, natija qanday bo'ldi. Keyingi tahlil shundan boshlanadi.",
+  l:["«14 kunda shunga o'xshash 3 taklif qabul qilingan, 1 tasi o'tkazib yuborilgan»","Siz rad etgan maslahatni sababsiz takrorlamaydi","Avvalgi byudjet oshirish ish berganini ko'radi","Jamoa har qanday almashganda ham tarix sizda qoladi"]},
+ {i:"05", t:"Reja", h:"Claude qarorni yig'adi", p:"Claude modeli analizatorlar xulosalari, bilimlar bazasi va xotirani oladi — va uzun matn emas, tuzilgan reja qaytaradi.",
+  l:["Oy prognozi: ortda, jadvalda, oldinda","P0 / P1 / P2 ustuvorligidagi harakatlar","Har birida: nega, kutilayotgan natija, «agar...» ssenariysi","Bir vaqtda uchtadan ortiq shoshilinch harakat emas","Alohida — kuzatuvlar va haftalik vazifalar"]},
+ {i:"06", t:"Siz", h:"Oxirgi so'z — insonda", p:"Reja Telegram'ga keladi. Har bir harakat ostida uchta tugma. Yirik va bahsli qarorlar faqat tasdiqdan keyin bajariladi.",
+  l:["Qabul qilish · O'tkazib yuborish · 24 soatga qoldirish","Ads Manager'dagi kerakli e'longa to'g'ridan-to'g'ri havola","Agent noto'g'ri buyruqni rad etadi va raqamlar bilan tushuntiradi","Qaror xotiraga yoziladi — doira yopiladi"]}
+];
+const pipe = $("#pipe"), pipeD = $("#pipeD"); let pipeI = 0, pipeT;
+pipe.innerHTML = NODES.map((n,i) => `<button class="node" data-i="${i}"><u>${n.i}</u><b>${n.t}</b></button>`).join("");
+function showNode(i){ pipeI = i; $$(".node",pipe).forEach((n,j) => n.classList.toggle("on", j===i)); const n = NODES[i];
+  pipeD.innerHTML = `<div><div class="eyebrow">${n.i}-qadam</div><h3>${n.h}</h3><p>${n.p}</p></div><ul>${n.l.map((x,k) => `<li style="animation-delay:${k*.06}s">${x}</li>`).join("")}</ul>`; }
+pipe.onclick = e => { const b = e.target.closest(".node"); if(b){ clearInterval(pipeT); showNode(+b.dataset.i); } };
+showNode(0);
+seen(pipe, () => { if(!RM && innerWidth>860) pipeT = setInterval(() => showNode((pipeI+1)%NODES.length), 4200); });
+
+/* ---- playground ---- */
+const pg = {goal:$("#pgGoal"), cpl:$("#pgCpl"), spend:$("#pgSpend"), freq:$("#pgFreq")};
+function verdict(){
+  const g=+pg.goal.value, c=+pg.cpl.value, s=+pg.spend.value, f=+pg.freq.value, k=c/g;
+  $("#oGoal").textContent="$"+g.toFixed(2); $("#oCpl").textContent="$"+c.toFixed(2); $("#oSpend").textContent="$"+s; $("#oFreq").textContent=f.toFixed(1);
+  Object.values(pg).forEach(fill);
+  let v;
+  if(s>=20 && k>2) v={c:"var(--red)",tag:"P0 · PAUZA",h:"E'lonni o'chirish",p:`Lid narxi maqsaddan ${k.toFixed(1).replace(".",",")} barobar yuqori, xarajat $${s}. Bundan keyin faqat qimmatlashadi — byudjetni yetakchilarga bergan ma'qul.`,r:"qoida: xarajat ≥ $20 va lid narxi > maqsaddan 2×"};
+  else if(f>=4.5) v={c:"var(--red)",tag:"P0 · KREATIV",h:"Kreativ charchadi — almashtirish",p:`Chastota ${f.toFixed(1)}: auditoriya rolikni juda ko'p marta ko'rgan. Yangi byudjet emas, yangi kreativ kerak.`,r:"qoida: chastota ≥ 4,5 — kritik"};
+  else if(s<20) v={c:"var(--t3)",tag:"KUTAMIZ",h:"Baholashga hali erta",p:`Hozircha atigi $${s} sarflangan. E'lon yetarli ma'lumot to'plamaguncha agent xulosa qilmaydi — aks holda bo'lajak yetakchini o'chirib qo'yish mumkin.`,r:"qoida: pauza haqida qaror — $20 xarajatdan boshlab"};
+  else if(k<0.7 && f<3) v={c:"var(--ok)",tag:"P1 · KENGAYTIRISH",h:"Byudjetni 20% oshirish",p:`Lid narxi maqsaddan ${Math.round((1-k)*100)}% past, chastota me'yorda. Algoritm o'rganishini buzmaslik uchun asta oshiramiz va to'lov narxini tekshiramiz.`,r:"qoida: lid narxi < maqsadning 0,7×, chastota < 3, qadam kuniga 20% dan oshmaydi"};
+  else if(f>=3) v={c:"var(--warn)",tag:"P1 · DIQQAT",h:"Kreativga o'rinbosar tayyorlash",p:`Chastota ${f.toFixed(1)} — charchashning ilk belgilari. Hozircha ishlayapti, lekin keyingi rolikni testga qo'yish vaqti keldi.`,r:"qoida: chastota ≥ 3,0 — ogohlantirish"};
+  else v={c:"var(--info)",tag:"ME'YOR",h:"Tegmaslik",p:"Ko'rsatkichlar me'yor ichida. Ishlayotgan e'lon uchun eng yaxshisi — unga xalaqit bermaslik.",r:"qoida: har bir ortiqcha o'zgarish o'rganishni qayta boshlaydi"};
+  const el=$("#verdict"); el.style.setProperty("--c",v.c);
+  el.innerHTML=`<span class="tag">${v.tag}</span><h3>${v.h}</h3><p>${v.p}</p><div class="rule">${v.r}</div>`;
+}
+Object.values(pg).forEach(i => i.oninput = verdict); verdict();
+
+/* ---- mini app ---- */
+const ma = $("#ma");
+function maTab(t){ $$(".ma-b",ma).forEach(b => b.classList.toggle("on", b.dataset.t===t)); $$(".ma-tabs button",ma).forEach(b => b.classList.toggle("on", b.dataset.tab===t)); $$("#maList button").forEach(b => b.classList.toggle("on", b.dataset.tab===t)); }
+ma.addEventListener("click", e => { const b = e.target.closest("[data-tab],[data-go]"); if(b) maTab(b.dataset.tab||b.dataset.go); });
+$("#maList").onclick = e => { const b = e.target.closest("button"); if(b) maTab(b.dataset.tab); };
+const simR = $("#simR");
+function sim(){ const b=+simR.value, leads=Math.round(b*30/1.84), meet=Math.round(leads*.22), deals=Math.max(1,Math.round(meet*.23));
+  $("#simO").textContent="$"+b+" / kuniga"; $("#s1").textContent=leads; $("#s2").textContent=meet; $("#s3").textContent=deals; $("#s4").textContent="$"+Math.round(b*30/deals); fill(simR); }
+simR.oninput = sim; sim();
+
+const QA = [
+ {q:"Qaysi kreativ byudjetni yeyapti?", a:"«Narx» huki: bir ariza uchun maqsad $2 bo'lgani holda $6.40 sarflandi — birorta ariza yo'q. Qolgan uchta rolik me'yorda, eng yaxshisi — «Klinika keysi», shartnoma $41.\n\nUni o'chirib, byudjetini yetakchiga berishni taklif qilaman.", act:"Tasdiqlash: «Narx huki»ga pauza", cf:"Kabinetda o'zgarish bo'ladi: «Narx huki» e'loniga pauza. Tasdiqlaysizmi?"},
+ {q:"Byudjetni kuniga $20 ga ko'tar", a:"Bunday qilmagan ma'qul. $10 → $20 — bu birdaniga +100%: algoritm qayta o'rganishga ketadi va ariza narxi oshadi.\n\nXavfsiz qadam — sutkasiga +30% dan oshmasin. Bugun maksimum $13. Ariza narxi $2 dan past tursa — ertaga yana ko'taramiz.", act:"Tasdiqlash: byudjet $10 → $13", cf:"Kabinetda o'zgarish bo'ladi: kunlik byudjet $10 → $13. Tasdiqlaysizmi?"},
+ {q:"Lidlarni qanday tezroq ishlash mumkin?", a:"Hozir arizadan birinchi qo'ng'iroqqacha — mediana 47 daqiqa, 12 ariza esa 15 daqiqadan ortiq kutmoqda.\n\nUch qadam: 1) tungi arizalarga (22–09) ertalab birinchi bo'lib qo'ng'iroq qilish; 2) menejerga 5-daqiqada eslatma yoqish; 3) arizalar cho'qqisi — seshanba 10–13, shu vaqtga ikkinchi odam qo'ying."}
+];
+const maChat = $("#maChat");
+function chatHome(){ maChat.innerHTML = `<div class="orb"></div><div class="c-intro"><b>Salom! Men — AI-targetologman.</b>Kabinet, CRM va mijoz brifini bilaman. Kabinetda o'zim hech narsani o'zgartirmayman: harakatni taklif qilaman, siz tasdiqlaysiz.</div><div class="c-chips">${QA.map((x,i) => `<button data-q="${i}">${x.q}</button>`).join("")}</div>`; }
+chatHome();
+maChat.addEventListener("click", async e => {
+  const q = e.target.closest("[data-q]"), act = e.target.closest(".act:not(.ok)");
+  if(q){ const it = QA[+q.dataset.q]; maChat.innerHTML = "";
+    const u = document.createElement("div"); u.className="cm u"; u.textContent=it.q; maChat.append(u);
+    const a = document.createElement("div"); a.className="cm a"; a.textContent="O'ylayapman…"; maChat.append(a); await sleep(RM?0:900);
+    a.textContent=""; const words = it.a.split(/(\s+)/);
+    for(const w of words){ a.textContent += w; maChat.scrollTop = maChat.scrollHeight; if(!RM) await sleep(22); }
+    if(it.act){ const b = document.createElement("button"); b.className="act"; b.textContent="🛡 "+it.act; b.dataset.cf=it.cf; maChat.append(b); }
+    const back = document.createElement("div"); back.className="c-chips"; back.innerHTML='<button data-home>← Boshqa savollar</button>'; maChat.append(back); maChat.scrollTop = maChat.scrollHeight; }
+  else if(act){ const sh = document.createElement("div"); sh.className="sheet"; sh.innerHTML=`<div><p>${act.dataset.cf}</p><button data-n>Bekor</button><button class="y" data-y>OK</button></div>`; ma.append(sh);
+    sh.onclick = ev => { if(ev.target.closest("[data-y]")){ act.className="act ok"; act.textContent="✓ Bajarildi"; } if(ev.target.closest("button")) sh.remove(); }; }
+  else if(e.target.closest("[data-home]")) chatHome();
+});
+
+/* ---- day ---- */
+const HRS = $("#hours"), hr = $("#hr"); let dayT;
+const EV = h => { const e = [];
+  if(h>=22 || h<8) e.push(["tun","Menejerlar uxlayapti — arizalar CRM'da to'planadi, ertalab navbatda birinchi bo'lib ketadi"],["nazorat","Arizasiz e'lon ertalabni kutmasdan avtostop bilan o'chiriladi"]);
+  if(h===8) e.push(["08:00","Lidlarni menejerlarga taqsimlash oynasi ochiladi"],["08:00","Tungi arizalar bo'sh menejerlarga taqsimlandi"]);
+  if(h===9) e.push(["09:00","Kechagi kun bo'yicha tonggi hisobot — butun jamoaga, har kimga o'z tilida"],["09:00","Kun vazifalari — xodimlar botida"]);
+  if(h>=9 && h<=22) e.push([`${String(h).padStart(2,"0")}:00`,"Soatlik xulosa: nechta lid keldi, taqsimlandi va ishlandi"]);
+  if(h>=8 && h<22) e.push(["5 va 10 daq","Lidni olmagan menejerga eslatma. Ikki marta o'tkazib yuborilsa — navbatchiga"]);
+  if(h>=10 && h<=20) e.push(["rahbarga","Sotuv bo'limining muddati o'tgan vazifalari ro'yxati"]);
+  if(h>=12 && h<=21) e.push(["tekshiruv","Xarajat sur'atini tekshirish: kunlik byudjetning 10% dan kami sarflangan bo'lsa — ogohlantirish"]);
+  if(h===20) e.push(["20:00","Kun yakuni — xodimlar botida"]);
+  if(h===22) e.push(["22:00","Taqsimlash oynasi yopiladi, navbatchilik rejimi"]);
+  return e; };
+HRS.innerHTML = Array.from({length:24}, (_,h) => `<i data-h="${h}" class="${h>=8&&h<22?"w":""} ${[9,20].includes(h)?"e":""}"></i>`).join("");
+function setHour(h){ hr.value=h; fill(hr); $("#clk").textContent=String(h).padStart(2,"0")+":00";
+  $("#clkS").textContent = h>=8&&h<22 ? "sotuv bo'limining ish vaqti" : "jamoa dam olmoqda, agent ishlayapti";
+  $$("i",HRS).forEach((i,j) => i.classList.toggle("on", j===h));
+  $("#evNow").innerHTML = EV(h).map((e,k) => `<li style="animation-delay:${k*.05}s"><b>${e[0]}</b>${e[1]}</li>`).join(""); }
+hr.oninput = () => { clearInterval(dayT); setHour(+hr.value); };
+HRS.onclick = e => { const i = e.target.closest("i"); if(i){ clearInterval(dayT); setHour(+i.dataset.h); } };
+setHour(9);
+seen($(".dayb"), () => { if(!RM) dayT = setInterval(() => setHour((+hr.value+1)%24), 2200); });
+
+/* ---- results ---- */
+const M = ["May","Iyun","Iyul","Avg","Sen","Okt"];
+const SPEND = ["$7,9K","$8,4K","$8,0K","$8,9K","$10,7K","$12,1K"];
+const SER = {
+  rev:{n:"Tushum", v:[590,945,900,902,1164,1040], f:v=>v+" mln"},
+  sales:{n:"Sotuvlar", v:[284,364,363,346,435,368], f:v=>v},
+  roas:{n:"Qaytim", v:[6.0,9.0,9.0,8.1,8.7,6.9], f:v=>String(v.toFixed(1)).replace(".",",")+"×"},
+  cpa:{n:"Sotuv narxi", v:[27.7,23.2,22.1,25.7,24.7,32.8], f:v=>"$"+String(v.toFixed(1)).replace(".",",")}
+};
+const CASES = [
+ {t:"Onlayn maktab №1", sub:"Kattalar uchun rus tili · O'zbekiston · AmoCRM", h:"Reklama byudjeti o'zgarmagan holda tushum bir oyda 1,6 barobar o'sdi", chart:true,
+  facts:[["590 → 945 <small>mln so'm</small>","May → iyun. Byudjet $8 ming atrofida qoldi. O'sishni Facebook va CRM orasidagi bo'shliq yopilgani hamda arizalarni ishlashdagi tartib berdi."],["10 893","arizani agent yarim yilda lid-formalardan topib, CRM'ga qaytardi. May oyida integratsiya chorakdan yarmigacha yo'qotayotgan edi."],["$39 va $301","lid narxi bir xil bo'lgan turli guruhlardagi to'lov narxi. Auditdan so'ng byudjet to'lov narxi bo'yicha qayta taqsimlandi."]],
+  note:"Manba: reklama kabineti va AmoCRM ma'lumotlari. Tushum — bitim yopilgan sana bo'yicha CRM'dagi butun tushum, kurs 12 500 so'm/$. Oktabr sentabrdan kuchsizroq — bu ham grafikda ko'rinadi: agent raqamlarni boricha ko'rsatadi."},
+ {t:"Onlayn maktab №2", sub:"Rus tili · O'zbekiston · Bitrix24", h:"Sifatsiz lidlar 2,3 barobar kamaydi, to'lov narxi $67 dan $37 ga tushdi",
+  facts:[["31,8% → 13,7%","iyundan avgustgacha sifatsiz lidlar ulushi — forma va auditoriyalar CRM ma'lumotlari asosida qayta qurilgandan so'ng."],["5,4×","sentabrda reklama qaytimi: $4 120 xarajat, 5 531 ariza, to'lov narxi $37 — bir oy oldin $67 edi."],["1 395","ariza Bitrix24'ga yetib bormagan — agent har soatlik solishtiruv bilan ularni sotuv bo'limiga qaytardi. Bungacha kuniga 11% atrofida yo'qolardi."]],
+  more:[["$12,4","noyabrda eng yaxshi lid-formadagi bitta to'lov narxi, o'rtachasi $32,6. Agent mijoz narxini har bir forma bo'yicha alohida hisoblaydi."],["71%","sotuvni 28 menejerdan 7 tasi qiladi. Agent arizalar o'sishi ishlov berishga taqalishini ko'rsatdi va oqim tezligi sotuv bo'limiga moslab boshqariladigan bo'ldi."],["2 ta raqam","har to'rtinchi arizada — agent menejerlar noto'g'ri raqamga qo'ng'iroq qilishiga sabab bo'lgan formalarni topib, tuzatdi."]],
+  note:"Manba: kabinet va Bitrix24 bo'yicha 2026-yil iyun–noyabr hisobotlari."},
+ {t:"Kontent-marketing maktabi", sub:"Onlayn kurs · O'zbekiston", h:"Lid $0,38 dan va oktabrning 20 kunida qaytim +90% atrofida",
+  facts:[["$0,38","1–20-oktabrdagi lid narxi: $809 xarajat, 2 106 lid, shundan 282 tasi kvalifikatsiyalangan."],["19,8 <small>mln so'm</small>","shu arizalardan tushum — 8 ta sotuv, to'liq bo'lmagan oyda reklama qaytimi +90% atrofida."],["2 653","arizani agent bir oyda o'zi CRM'ga o'tkazdi — standart integratsiya uzilib ishlagan paytda."]],
+  more:[["19 700 va 12 400","so'm — bitta liddan tushum: lid-forma va sayt. Agent sotuvlar bo'yicha hisoblab, trafikni formaga o'tkazdi."],["0 sotuv","— «chegirmali» kreativlar natijasi, lid narxi $1,52 bo'lgan holda. Yetakchi kreativ $0,70 dan 1 855 lid va 6 ta sotuv keltirdi."],["97%","CRM'dagi yangi kompaniyalar bo'sh yozuv bo'lib, ichida mijozlarning ishlaydigan raqamlari yashiringan edi. Topildi va tuzatildi."]],
+  note:"Manba: reklama kabineti va CRM, 2026-yil iyun–oktabr."},
+ {t:"Bolalar uchun IT-maktab", sub:"Oflayn · Toshkent · 7 filial · AmoCRM", h:"Agent hisobotdagi lid narxi ikki barobar past ko'rsatilganini aniqladi",
+  facts:[["×2","— hodisalar ikki marta sanalgani sababli hisobotlarda lidlar shuncha oshirib ko'rsatilgan. Haqiqiy lid narxi ikki barobar yuqori chiqdi — qarorlar endi shunga qarab qabul qilinadi."],["$203","bitta mijoz uchun va $12 kvalifikatsiyalangan lid uchun — ilk bor «kabinet bo'yicha o'rtacha» emas, har bir kreativ bo'yicha hisoblandi."],["153","sotuv hodisasini agent Conversions API orqali Meta'ga qaytardi — algoritm arizalardan emas, xaridorlardan o'rganishi uchun."]],
+  more:[["$10–18","— agent o'chirishni taklif qilgan beshta e'londagi lid narxi. Byudjet yetakchiga o'tdi: kuniga $144 → $173."],["3 kun","ketma-ket bitta rolikning lid narxi o'sdi ($3,85 → $8,79) — haftalik byudjetni yeb qo'ymasidan pauza qilindi."],["38%","lid kvalifikatsiyalangan bo'lib chiqdi — Facebook'dagi 804 ariza CRM statuslari bilan solishtirildi."]],
+  note:"Manba: agent jurnali, 2026-yil fevral–mart. Ma'lumotlarda oylik tushum yo'q, shuning uchun u ko'rsatilmagan."}
+];
+const caseTabs = $("#caseTabs"), caseEl = $("#case");
+caseTabs.innerHTML = CASES.map((c,i) => `<button data-i="${i}">${c.t}</button>`).join("");
+function factHTML(f){ return f.map(x => `<div class="fact"><b>${x[0]}</b><p>${x[1]}</p></div>`).join(""); }
+function drawChart(k){ const s = SER[k], mx = Math.max(...s.v);
+  $(".chart",caseEl).innerHTML = s.v.map((v,i) => `<div class="col"><b>${s.f(v)}</b><i style="--d:${i*.07}s" data-h="${v/mx*82}"></i></div>`).join("");
+  $$(".seg button",caseEl).forEach(b => b.classList.toggle("on", b.dataset.k===k));
+  requestAnimationFrame(() => requestAnimationFrame(() => $$(".chart i",caseEl).forEach(i => i.style.height = i.dataset.h+"%"))); }
+function showCase(i){ const c = CASES[i]; $$("button",caseTabs).forEach((b,j) => b.classList.toggle("on", i===j));
+  caseEl.innerHTML = `<div class="case-h"><div><p>${c.sub}</p><h3 style="margin-top:10px;max-width:26ch">${c.h}</h3></div>${c.chart?`<div class="seg">${Object.entries(SER).map(([k,s]) => `<button data-k="${k}">${s.n}</button>`).join("")}</div>`:""}</div>`
+   + (c.chart?`<div class="chart"></div><div class="xl">${M.map((m,j) => `<div>${m}<small>reklama ${SPEND[j]}</small></div>`).join("")}</div>`:"")
+   + `<div class="facts">${factHTML(c.facts)}</div>` + (c.more?`<div class="facts" style="margin-top:14px">${factHTML(c.more)}</div>`:"");
+  $("#caseNote").textContent = c.note; if(c.chart) drawChart("rev"); }
+caseTabs.onclick = e => { const b = e.target.closest("button"); if(b) showCase(+b.dataset.i); };
+caseEl.addEventListener("click", e => { const b = e.target.closest(".seg button"); if(b) drawChart(b.dataset.k); });
+showCase(0); seen(caseEl, () => drawChart("rev"));
+
+/* ---- decisions ---- */
+const DEC = [
+ ["09.10","g","KENGAYTIRISH","Byudjet — sotayotganlarga","To'lov narxi <b>$36–40</b> bo'lgan to'rtta guruh byudjetini oshirdi (maqsad $37). Umumiy byudjet: kuniga <b>$340 → $381</b>. Lid narxi bo'yicha bu guruhlar boshqalardan farq qilmasdi."],
+ ["26.09","y","QAYTARISH","O'z tezlashtirishini bekor qildi","Bir kun oldin beshta guruh byudjetini 20–30% oshirgan edi. Bir sutkada lid narxi <b>26%</b> o'sdi, klikdan arizaga konversiya 9,7% dan 7,9% ga tushdi. Avvalgi holatga qaytardi."],
+ ["22.09","","PAUZA","Sotmaydigan kreativ","Rolik uchta auditoriyada <b>$513</b> sarflab, bitta sotuv keltirdi. O'chirildi, to'lov narxi $28 bo'lgan eng yaxshi auditoriyaga esa byudjet qo'shildi."],
+ ["17.10","y","FORMA","Lidlar nega sifatsizligini topdi","Arizalarning 15 foizida forma messenjersiz eski raqamni qo'yib yuborgan: ularda sifatlilar <b>5%, boshqalarda 39%</b> edi. Ishlaydigan raqam haqida majburiy savol qo'shdi."],
+ ["14.10","","SIFAT","Lidlar emas, to'lovlar bo'yicha baholaydi","A3 guruhi: 11% sifatli lid va 0 to'lov — pauzaga. A1 guruhi: 41% sifatli va 5 to'lov — byudjet oshirildi. Ikkalasida ham lid narxi me'yorda edi."],
+ ["16.11","","AKSIYADAN SO'NG","Aksiya guruhlarini o'z vaqtida to'xtatdi","Aksiyadan keyin uchta guruh bitta sotuvni <b>$155–230</b> ga berayotgan edi (chegara $100). Kuniga $249 ni pauzaga qo'ydi va sotuv narxi $25–43 bo'lgan bog'lamlarni qaytardi."]
+];
+$("#dec").innerHTML = DEC.map((d,i) => `<div class="d rv" style="--d:${i%3*.08}s"><div class="top"><span>${d[0]}.2026</span><span class="k ${d[1]}">${d[2]}</span></div><h3>${d[3]}</h3><p>${d[4]}</p></div>`).join("");
+$$("#dec .rv").forEach(e => io.observe(e));
+
+/* keyboard: arrows switch sections */
+addEventListener("keydown", e => { if(e.target.matches("input")) return; if(e.key!=="ArrowRight" && e.key!=="ArrowLeft") return;
+  const cur = dotEls.findIndex(d => d.classList.contains("on")), n = Math.max(0, Math.min(secs.length-1, cur + (e.key==="ArrowRight"?1:-1)));
+  secs[n].scrollIntoView(); });
+</script>
+</body>
+</html>
